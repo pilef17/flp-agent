@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLP Agent – Assistente de Treino</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --verde:    #00E676;
+    --verde-dk: #00C853;
+    --preto:    #0D0D0D;
+    --grafite:  #1C1C1C;
+    --painel:   #141414;
+    --borda:    #2A2A2A;
+    --texto:    #E8E8E8;
+    --muted:    #6B6B6B;
+    --user-bg:  #003020;
+    --ai-bg:    #1C1C1C;
+    --danger:   #FF5252;
+    --warn:     #FFB300;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--preto); color: var(--texto);
+    font-family: 'Inter', sans-serif;
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  /* ══ SCREENS ══ */
+  .screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* ══ MODAL PERFIL ══ */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.88);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 16px; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--grafite); border: 1px solid var(--borda);
+    border-radius: 16px; width: 100%; max-width: 420px;
+    padding: 24px 20px; animation: modalIn .2s ease;
+    max-height: 90dvh; overflow-y: auto;
+  }
+  @keyframes modalIn { from{opacity:0;transform:scale(.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+  .modal-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .logo-sq { width: 34px; height: 34px; background: var(--verde); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-sq svg { width: 18px; height: 18px; fill: var(--preto); }
+  .modal-logo h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.1rem; letter-spacing: .05em; text-transform: uppercase; }
+  .modal-logo p { font-size: .7rem; color: var(--muted); margin-top: 1px; }
+
+  .modal h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--verde); margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .form-full { grid-column: 1 / -1; }
+  label { font-size: .7rem; color: var(--muted); display: block; margin-bottom: 4px; letter-spacing: .04em; text-transform: uppercase; }
+  input, select {
+    width: 100%; background: var(--painel); border: 1px solid var(--borda);
+    border-radius: 8px; color: var(--texto); font-family: 'Inter', sans-serif;
+    font-size: .83rem; padding: 8px 10px; outline: none; transition: border-color .15s; appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--verde); }
+  input::placeholder { color: var(--muted); }
+
+  .rpe-section { margin-top: 14px; }
+  .rpe-row { display: flex; gap: 8px; align-items: flex-end; }
+  .rpe-row input { flex: 1; }
+  .rpe-add-btn {
+    background: var(--verde); border: none; border-radius: 8px;
+    color: var(--preto); font-weight: 700; font-size: 1.1rem;
+    width: 36px; height: 36px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: background .15s;
+  }
+  .rpe-add-btn:hover { background: var(--verde-dk); }
+  .rpe-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; min-height: 24px; }
+  .rpe-pill {
+    background: var(--painel); border: 1px solid var(--borda);
+    border-radius: 20px; padding: 3px 9px; font-size: .72rem;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .rpe-pill .val { font-weight: 700; }
+  .rpe-pill .val.low  { color: var(--verde); }
+  .rpe-pill .val.mid  { color: var(--warn); }
+  .rpe-pill .val.high { color: var(--danger); }
+  .rpe-pill button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .85rem; padding: 0; }
+  .rpe-pill button:hover { color: var(--danger); }
+
+  .modal-actions { display: flex; gap: 9px; margin-top: 20px; }
+  .btn-primary {
+    flex: 1; background: var(--verde); border: none; border-radius: 9px;
+    color: var(--preto); font-weight: 700; font-size: .88rem;
+    padding: 10px; cursor: pointer; font-family: 'Inter', sans-serif; transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--verde-dk); }
+  .btn-ghost {
+    background: none; border: 1px solid var(--borda); border-radius: 9px;
+    color: var(--muted); font-size: .83rem; padding: 10px 14px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color .15s, color .15s;
+  }
+  .btn-ghost:hover { border-color: var(--verde); color: var(--verde); }
+
+  /* ══ HEADER ══ */
+  header {
+    background: var(--grafite); border-bottom: 1px solid var(--borda);
+    padding: 11px 15px; display: flex; align-items: center; gap: 11px; flex-shrink: 0;
+  }
+  .logo-wrap { width: 34px; height: 34px; background: var(--verde); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-wrap svg { width: 18px; height: 18px; fill: var(--preto); }
+  .header-info h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.05rem; letter-spacing: .04em; text-transform: uppercase; line-height: 1; color: #fff; }
+  .header-info span { font-size: .66rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+  .hdr-btn {
+    background: var(--painel); border: 1px solid var(--borda); border-radius: 7px;
+    color: var(--muted); font-size: .7rem; padding: 5px 9px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: border-color .15s, color .15s; white-space: nowrap;
+  }
+  .hdr-btn:hover { border-color: var(--verde); color: var(--verde); }
+  .hdr-btn.active { border-color: var(--verde); color: var(--verde); background: #0D200D; }
+  .status-dot { display: flex; align-items: center; gap: 5px; font-size: .7rem; color: var(--muted); }
+  .dot { width: 7px; height: 7px; background: var(--verde); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ══ ATHLETE CARD ══ */
+  .athlete-card {
+    background: linear-gradient(135deg, #0D1F0D 0%, #141414 100%);
+    border-bottom: 1px solid var(--borda);
+    padding: 11px 15px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .athlete-card.hidden { display: none; }
+  .athlete-avatar {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: linear-gradient(135deg, #003820, #006040);
+    border: 2px solid var(--verde);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 1rem; color: var(--verde); flex-shrink: 0;
+  }
+  .athlete-info { flex: 1; min-width: 0; }
+  .athlete-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase; color: #fff; line-height: 1; }
+  .athlete-meta { font-size: .7rem; color: var(--muted); margin-top: 3px; }
+  .athlete-meta span { color: var(--verde); font-weight: 600; }
+  .rpe-history { display: flex; gap: 4px; align-items: center; margin-top: 5px; }
+  .rpe-bar-wrap { display: flex; gap: 3px; align-items: flex-end; }
+  .rpe-bar { width: 5px; border-radius: 2px; }
+  .rpe-label { font-size: .62rem; color: var(--muted); margin-left: 4px; }
+  .acwr-badge { background: var(--painel); border: 1px solid var(--borda); border-radius: 8px; padding: 5px 9px; text-align: center; flex-shrink: 0; }
+  .acwr-val { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1rem; line-height: 1; }
+  .acwr-lbl { font-size: .58rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .acwr-ok { color: var(--verde); } .acwr-warn { color: var(--warn); } .acwr-danger { color: var(--danger); }
+
+  /* ══ SHORTCUTS ══ */
+  .shortcuts {
+    background: var(--painel); border-bottom: 1px solid var(--borda);
+    padding: 8px 14px; display: flex; gap: 6px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+  }
+  .shortcuts::-webkit-scrollbar { display: none; }
+  .chip {
+    background: var(--grafite); border: 1px solid var(--borda); color: var(--texto);
+    border-radius: 20px; padding: 5px 11px; font-size: .71rem; white-space: nowrap;
+    cursor: pointer; transition: border-color .15s, color .15s; font-family: 'Inter', sans-serif;
+  }
+  .chip:hover { border-color: var(--verde); color: var(--verde); }
+  .chip.timer-chip { border-color: #1A3A1A; color: var(--verde); background: #0A1A0A; }
+  .chip.timer-chip:hover { border-color: var(--verde); background: #0D200D; }
+
+  /* ══ CHAT ══ */
+  .chat-area {
+    flex: 1; overflow-y: auto; padding: 16px 14px;
+    display: flex; flex-direction: column; gap: 13px;
+    scrollbar-width: thin; scrollbar-color: var(--borda) transparent;
+  }
+  .msg { display: flex; gap: 8px; max-width: 100%; animation: fadeUp .22s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .msg.user { flex-direction: row-reverse; }
+  .avatar {
+    width: 29px; height: 29px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700; flex-shrink: 0; align-self: flex-start;
+  }
+  .avatar.ai  { background: var(--verde); color: var(--preto); font-family: 'Barlow Condensed', sans-serif; font-size: .78rem; letter-spacing: .04em; }
+  .avatar.usr { background: #1A3A2A; color: var(--verde); }
+  .bubble {
+    max-width: 83%; padding: 10px 13px; border-radius: 11px;
+    font-size: .845rem; line-height: 1.65;
+  }
+  .msg.ai   .bubble { background: var(--ai-bg); border: 1px solid var(--borda); border-top-left-radius: 4px; }
+  .msg.user .bubble { background: var(--user-bg); border: 1px solid #004030; border-top-right-radius: 4px; }
+  .bubble strong { color: var(--verde); font-weight: 600; }
+  .bubble em { color: #999; font-style: normal; font-size: .77rem; }
+
+  /* session card inside bubble */
+  .session-card {
+    background: #0A1A0A; border: 1px solid #1A3A1A;
+    border-radius: 10px; padding: 12px 14px; margin-top: 10px;
+  }
+  .session-card h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .9rem; text-transform: uppercase; letter-spacing: .06em; color: var(--verde); margin-bottom: 8px; }
+  .ex-item { padding: 6px 0; border-bottom: 1px solid #1A2A1A; display: flex; align-items: flex-start; gap: 8px; }
+  .ex-item:last-child { border-bottom: none; }
+  .ex-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .8rem; color: var(--muted); min-width: 18px; margin-top: 1px; }
+  .ex-body { flex: 1; }
+  .ex-name { font-size: .82rem; font-weight: 600; color: #fff; line-height: 1.3; }
+  .ex-detail { font-size: .73rem; color: var(--muted); margin-top: 2px; }
+  .ex-time { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .78rem; color: var(--verde); flex-shrink: 0; margin-top: 2px; }
+  .start-session-btn {
+    width: 100%; margin-top: 12px; background: var(--verde); border: none;
+    border-radius: 8px; color: var(--preto); font-weight: 700; font-size: .88rem;
+    padding: 10px; cursor: pointer; font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background .15s;
+  }
+  .start-session-btn:hover { background: var(--verde-dk); }
+
+  /* typing */
+  .typing { display: flex; gap: 5px; padding: 12px 14px; }
+  .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce .9s infinite; }
+  .typing span:nth-child(2){animation-delay:.15s} .typing span:nth-child(3){animation-delay:.30s}
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+  /* ══ INPUT ══ */
+  .input-area {
+    background: var(--grafite); border-top: 1px solid var(--borda);
+    padding: 10px 13px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
+  }
+  textarea {
+    flex: 1; background: var(--painel); border: 1px solid var(--borda);
+    border-radius: 9px; color: var(--texto); font-family: 'Inter', sans-serif;
+    font-size: .845rem; line-height: 1.5; padding: 8px 11px;
+    resize: none; outline: none; max-height: 110px; min-height: 38px; transition: border-color .15s;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { border-color: var(--verde); }
+  .send-btn {
+    width: 38px; height: 38px; background: var(--verde); border: none;
+    border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background .15s, transform .1s;
+  }
+  .send-btn:hover { background: var(--verde-dk); }
+  .send-btn:active { transform: scale(.93); }
+  .send-btn svg { width: 16px; height: 16px; fill: var(--preto); }
+  .send-btn:disabled { background: var(--borda); cursor: not-allowed; }
+  .chat-area::-webkit-scrollbar { width: 3px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--borda); border-radius: 2px; }
+
+  /* ══ TIMER SCREEN ══ */
+  #timerScreen {
+    background: var(--preto);
+  }
+
+  .timer-header {
+    background: var(--grafite); border-bottom: 1px solid var(--borda);
+    padding: 11px 15px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .back-btn {
+    background: var(--painel); border: 1px solid var(--borda); border-radius: 7px;
+    color: var(--muted); font-size: .75rem; padding: 6px 10px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: border-color .15s, color .15s;
+  }
+  .back-btn:hover { border-color: var(--verde); color: var(--verde); }
+  .timer-header h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+  .timer-header .progress-text { margin-left: auto; font-size: .75rem; color: var(--muted); }
+
+  /* progress bar */
+  .progress-bar-wrap { background: var(--grafite); border-bottom: 1px solid var(--borda); padding: 0; flex-shrink: 0; }
+  .progress-bar-inner { height: 3px; background: var(--verde); transition: width .5s ease; }
+
+  /* main timer area */
+  .timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px; gap: 0; overflow: hidden; }
+
+  .phase-badge {
+    font-size: .68rem; text-transform: uppercase; letter-spacing: .12em;
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; font-weight: 600;
+  }
+  .phase-badge.work   { background: #0D200D; color: var(--verde); border: 1px solid #1A4A1A; }
+  .phase-badge.rest   { background: #1A1200; color: var(--warn);   border: 1px solid #3A2A00; }
+  .phase-badge.done   { background: #1A0000; color: var(--danger); border: 1px solid #3A0000; }
+
+  .ex-counter { font-size: .72rem; color: var(--muted); margin-bottom: 6px; letter-spacing: .06em; text-transform: uppercase; }
+
+  .ex-title-timer {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 1.6rem; text-align: center; color: #fff; line-height: 1.1;
+    text-transform: uppercase; letter-spacing: .03em; margin-bottom: 6px;
+  }
+  .ex-desc-timer { font-size: .8rem; color: var(--muted); text-align: center; max-width: 280px; line-height: 1.5; margin-bottom: 28px; }
+
+  /* circular timer */
+  .timer-ring-wrap { position: relative; width: 180px; height: 180px; margin-bottom: 28px; }
+  .timer-ring { transform: rotate(-90deg); }
+  .ring-bg   { fill: none; stroke: var(--grafite); stroke-width: 8; }
+  .ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+  .ring-fill.work { stroke: var(--verde); }
+  .ring-fill.rest { stroke: var(--warn); }
+  .timer-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .timer-digits {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 3rem; line-height: 1; letter-spacing: -.02em; color: #fff;
+  }
+  .timer-phase-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
+
+  /* controls */
+  .timer-controls { display: flex; gap: 12px; align-items: center; }
+  .ctrl-btn {
+    background: var(--grafite); border: 1px solid var(--borda);
+    border-radius: 50%; width: 48px; height: 48px;
+    color: var(--texto); font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s, background .15s;
+  }
+  .ctrl-btn:hover { border-color: var(--verde); background: #0D200D; }
+  .play-btn {
+    background: var(--verde); border: none; border-radius: 50%;
+    width: 64px; height: 64px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .1s;
+  }
+  .play-btn:hover { background: var(--verde-dk); }
+  .play-btn:active { transform: scale(.93); }
+  .play-btn svg { width: 26px; height: 26px; fill: var(--preto); }
+  .ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* queue */
+  .ex-queue {
+    width: 100%; background: var(--grafite); border-top: 1px solid var(--borda);
+    padding: 10px 14px; flex-shrink: 0; max-height: 130px; overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .ex-queue::-webkit-scrollbar { display: none; }
+  .queue-label { font-size: .64rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 7px; }
+  .queue-item {
+    display: flex; align-items: center; gap: 9px; padding: 6px 0;
+    border-bottom: 1px solid var(--borda); font-size: .78rem;
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-item.current { color: var(--verde); font-weight: 600; }
+  .queue-item.done-q  { color: var(--muted); text-decoration: line-through; }
+  .queue-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .75rem; color: var(--muted); min-width: 16px; }
+  .queue-name { flex: 1; }
+  .queue-dur { font-size: .7rem; color: var(--muted); }
+
+  /* ══ DONE SCREEN ══ */
+  .done-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.92);
+    z-index: 300; display: none; align-items: center; justify-content: center;
+    flex-direction: column; padding: 24px; text-align: center;
+    backdrop-filter: blur(6px);
+  }
+  .done-overlay.show { display: flex; }
+  .done-icon { font-size: 3rem; margin-bottom: 12px; animation: popIn .4s ease; }
+  @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
+  .done-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 2rem; text-transform: uppercase; letter-spacing: .05em; color: var(--verde); margin-bottom: 6px; }
+  .done-sub { font-size: .85rem; color: var(--muted); margin-bottom: 24px; }
+  .done-stats { display: flex; gap: 20px; margin-bottom: 28px; }
+  .done-stat { text-align: center; }
+  .done-stat .val { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.8rem; color: #fff; line-height: 1; }
+  .done-stat .lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 3px; }
+  .done-actions { display: flex; flex-direction: column; gap: 9px; width: 100%; max-width: 280px; }
+  .done-actions .btn-primary { width: 100%; }
+  .done-actions .btn-ghost { width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- ══ MODAL PERFIL ══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-logo">
+      <div class="logo-sq"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
+      <div><h2>FLP Agent</h2><p>Cadastro do Atleta</p></div>
+    </div>
+    <h3>Dados do Atleta</h3>
+    <div class="form-grid">
+      <div class="form-full"><label>Nome completo</label><input id="f-nome" type="text" placeholder="Ex: Lucas Oliveira"></div>
+      <div><label>Idade</label><input id="f-idade" type="number" placeholder="15" min="8" max="40"></div>
+      <div><label>Categoria</label>
+        <select id="f-categoria"><option value="">Selecione</option><option>Sub-13</option><option>Sub-14</option><option>Sub-15</option><option>Sub-16</option><option>Sub-17</option><option>Sub-19</option><option>Adulto</option></select>
+      </div>
+      <div><label>Posição</label>
+        <select id="f-posicao"><option value="">Selecione</option><option>Goleiro</option><option>Zagueiro</option><option>Lateral Direito</option><option>Lateral Esquerdo</option><option>Volante</option><option>Meia</option><option>Ponta Direita</option><option>Ponta Esquerda</option><option>Atacante</option></select>
+      </div>
+      <div class="form-full"><label>Clube / Academia</label><input id="f-clube" type="text" placeholder="Ex: FLP Performance"></div>
+      <div class="form-full"><label>Objetivo principal</label>
+        <select id="f-objetivo"><option value="">Selecione</option><option>Desenvolvimento técnico geral</option><option>Especialização por posição</option><option>Preparação para peneira/teste</option><option>Recuperação pós-lesão</option><option>Aumento de carga competitiva</option><option>Melhora física/atlética</option></select>
+      </div>
+    </div>
+    <div class="rpe-section">
+      <h3>Histórico de RPE (últimas sessões)</h3>
+      <div class="rpe-row">
+        <div style="flex:1"><label>RPE da sessão (1–10)</label><input id="f-rpe" type="number" placeholder="Ex: 7" min="1" max="10"></div>
+        <button class="rpe-add-btn" onclick="addRpe()">+</button>
+      </div>
+      <div class="rpe-pills" id="rpePills"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="skipBtn" onclick="skipProfile()">Pular</button>
+      <button class="btn-primary" onclick="saveProfile()">Começar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DONE OVERLAY ══ -->
+<div class="done-overlay" id="doneOverlay">
+  <div class="done-icon">🏆</div>
+  <div class="done-title">Treino Concluído!</div>
+  <div class="done-sub" id="doneAthleteLabel">Excelente trabalho hoje.</div>
+  <div class="done-stats">
+    <div class="done-stat"><div class="val" id="doneDuration">–</div><div class="lbl">Duração</div></div>
+    <div class="done-stat"><div class="val" id="doneExCount">–</div><div class="lbl">Exercícios</div></div>
+    <div class="done-stat"><div class="val" id="doneRpe">–</div><div class="lbl">RPE Médio</div></div>
+  </div>
+  <div class="done-actions">
+    <button class="btn-primary" onclick="finishSession()">✅ Registrar RPE e voltar</button>
+    <button class="btn-ghost" onclick="backToChat()">Voltar ao chat</button>
+  </div>
+</div>
+
+<!-- ══ CHAT SCREEN ══ -->
+<div class="screen active" id="chatScreen">
+  <header>
+    <div class="logo-wrap"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
+    <div class="header-info"><h1>FLP Agent</h1><span>Treino Individual</span></div>
+    <div class="header-right">
+      <button class="hdr-btn" onclick="openModal()">✏️ Atleta</button>
+      <div class="status-dot"><div class="dot"></div> Online</div>
+    </div>
+  </header>
+
+  <div class="athlete-card hidden" id="athleteCard">
+    <div class="athlete-avatar" id="athleteInitials">–</div>
+    <div class="athlete-info">
+      <div class="athlete-name" id="athleteName">–</div>
+      <div class="athlete-meta" id="athleteMeta">–</div>
+      <div class="rpe-history" id="rpeHistory"></div>
+    </div>
+    <div class="acwr-badge" id="acwrBadge" style="display:none">
+      <div class="acwr-val" id="acwrVal">–</div>
+      <div class="acwr-lbl">ACWR</div>
+    </div>
+  </div>
+
+  <div class="shortcuts">
+    <button class="chip timer-chip" onclick="sendChip('Gera uma sessão de treino completa para hoje em formato de exercícios com tempo de duração para cada um')">⏱ Treino ao vivo</button>
+    <button class="chip" onclick="sendChip('Gera uma sessão de treino completa para meu atleta hoje')">⚡ Sessão do dia</button>
+    <button class="chip" onclick="sendChip('Como está a carga do meu atleta? Analise o RPE e me dê uma recomendação')">📊 Análise de carga</button>
+    <button class="chip" onclick="sendChip('Quais são os focos técnicos prioritários para a posição do meu atleta?')">🎯 Focos por posição</button>
+    <button class="chip" onclick="sendChip('Preciso de 3 exercícios específicos para trabalhar em 20 minutos')">⚽ Exercícios rápidos</button>
+    <button class="chip" onclick="sendChip('Como deve ser a periodização semanal do meu atleta?')">📋 Periodização</button>
+  </div>
+
+  <div class="chat-area" id="chat">
+    <div class="msg ai">
+      <div class="avatar ai">FLP</div>
+      <div class="bubble">
+        Olá! Sou o <strong>FLP Agent</strong>.<br><br>
+        Cadastre o perfil do seu atleta para receber sessões e análises 100% personalizadas.<br><br>
+        💡 Novo: clique em <strong>⏱ Treino ao vivo</strong> para gerar uma sessão com timer interativo — ideal para usar no campo!<br><br>
+        <em>↑ Clique em "✏️ Atleta" para cadastrar o perfil</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="Pergunte sobre o atleta ou treino..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══ TIMER SCREEN ══ -->
+<div class="screen" id="timerScreen">
+  <div class="timer-header">
+    <button class="back-btn" onclick="backToChat()">← Voltar</button>
+    <h2 id="timerSessionTitle">Treino ao Vivo</h2>
+    <div class="progress-text" id="timerProgressText">0 / 0</div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-inner" id="progressBar" style="width:0%"></div></div>
+
+  <div class="timer-body">
+    <div class="phase-badge work" id="phaseBadge">Exercício</div>
+    <div class="ex-counter" id="exCounter">Exercício 1 de 1</div>
+    <div class="ex-title-timer" id="exTitle">–</div>
+    <div class="ex-desc-timer" id="exDesc">–</div>
+
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" width="180" height="180" viewBox="0 0 180 180">
+        <circle class="ring-bg"   cx="90" cy="90" r="80"/>
+        <circle class="ring-fill work" id="ringFill" cx="90" cy="90" r="80"
+          stroke-dasharray="502.65" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-digits" id="timerDigits">00:00</div>
+        <div class="timer-phase-label" id="timerPhaseLabel">pronto</div>
+      </div>
+    </div>
+
+    <div class="timer-controls">
+      <button class="ctrl-btn" onclick="prevExercise()" title="Anterior">
+        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="play-btn" id="playBtn" onclick="toggleTimer()">
+        <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="ctrl-btn" onclick="nextExercise()" title="Próximo">
+        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="ex-queue" id="exQueue">
+    <div class="queue-label">Sequência de exercícios</div>
+    <div id="queueItems"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let athleteProfile = null;
+let rpeList = [];
+let isLoading = false;
+const history = [];
+
+// Timer state
+let exercises = [];
+let currentEx = 0;
+let isRest = false;
+let secondsLeft = 0;
+let totalSeconds = 0;
+let timerInterval = null;
+let isRunning = false;
+let sessionStartTime = null;
+const CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
+
+// ══════════════════════════════════
+// SYSTEM PROMPT
+// ══════════════════════════════════
+function buildSystemPrompt(timerMode = false) {
+  let base = `Você é o FLP Agent, assistente especializado em treino individual de futebol da metodologia FLP Performance.
+
+METODOLOGIA FLP — 6 PILARES:
+1. Técnica Individual: domínio de bola, passes, finalizações, condução
+2. Tático-Posicional: comportamento por posição e situações de jogo
+3. Físico-Atlético: velocidade, resistência, força funcional, agilidade
+4. Cognitivo: leitura de jogo, tomada de decisão, antecipação
+5. Psicológico: mentalidade, confiança, foco, resiliência
+6. Controle de Carga: RPE, ACWR, periodização e recuperação
+
+POSIÇÕES E FOCOS:
+- Goleiro: posicionamento, saída de bola, jogo aéreo, reflexos
+- Zagueiro: duelos, cobertura, saída com bola, marcação
+- Lateral: sobreposição, cruzamento, apoio, transição
+- Volante: proteção, transição, passe vertical, leitura de jogo
+- Meia: criatividade, mobilidade, assistência, chegada
+- Ponta: drible 1x1, aceleração, cruzamento, finalização
+- Atacante: finalização, jogo de costas, movimentação, cabeceio
+
+FAIXAS ETÁRIAS:
+- Sub-13/14: volume baixo, foco em técnica e prazer
+- Sub-15/16: carga tática e física progressiva
+- Sub-17/19: volume moderado-alto, especialização
+- Adulto: alta intensidade, performance específica
+
+CONTROLE DE CARGA:
+- RPE 1-4: baixa | RPE 5-6: moderada | RPE 7-8: alta | RPE 9-10: máxima
+- ACWR ideal: 0.8–1.3 | >1.5 = risco de lesão | <0.8 = subcarga
+
+FORMATO PADRÃO:
+- Prático, direto, emojis para organizar (⚽ 📋 🔥 ⏱ 💪 🎯)
+- Sessões: aquecimento → parte principal → desaquecimento → RPE esperado
+- Fale em português do Brasil`;
+
+  if (timerMode) {
+    base += `
+
+══ MODO TIMER ATIVO ══
+O usuário quer gerar uma sessão no formato interativo com timer. Você DEVE retornar APENAS um bloco JSON válido, sem nenhum texto antes ou depois, sem markdown, sem explicações. Formato exato:
+
+{"title":"Nome da Sessão","rpe_esperado":7,"exercises":[{"name":"Nome do Exercício","description":"Instrução clara em 1-2 frases","duration_seconds":180,"rest_seconds":60},{"name":"Segundo Exercício","description":"Instrução clara","duration_seconds":120,"rest_seconds":45}]}
+
+REGRAS:
+- Mínimo 5 exercícios, máximo 8
+- duration_seconds entre 60 e 300
+- rest_seconds entre 30 e 90
+- Inclua aquecimento como primeiro exercício e desaquecimento como último
+- Adapte à posição e categoria do atleta
+- Retorne APENAS o JSON, sem nenhum outro texto`;
+  }
+
+  if (athleteProfile) {
+    const p = athleteProfile;
+    const rpeInfo = rpeList.length > 0 ? `\nRPE histórico: [${rpeList.join(', ')}]` : '';
+    const acwr = calcACWR();
+    const acwrInfo = acwr ? `\nACWR: ${acwr.toFixed(2)}` : '';
+    base += `\n\n══ ATLETA ATUAL ══
+Nome: ${p.nome || '–'} | Idade: ${p.idade || '–'} | Categoria: ${p.categoria || '–'}
+Posição: ${p.posicao || '–'} | Clube: ${p.clube || '–'}
+Objetivo: ${p.objetivo || '–'}${rpeInfo}${acwrInfo}
+→ Use sempre estas informações para personalizar respostas. Cite o nome do atleta.`;
+  }
+
+  return base;
+}
+
+// ══════════════════════════════════
+// ACWR
+// ══════════════════════════════════
+function calcACWR() {
+  if (rpeList.length < 4) return null;
+  const aguda  = rpeList.slice(-7).reduce((a,b)=>a+b,0) / Math.min(rpeList.length,7);
+  const cronica = rpeList.slice(-28).reduce((a,b)=>a+b,0) / Math.min(rpeList.length,28);
+  return cronica > 0 ? aguda / cronica : null;
+}
+
+// ══════════════════════════════════
+// RPE UI
+// ══════════════════════════════════
+function rpeColor(v) { return v<=4?'low':v<=7?'mid':'high'; }
+function addRpe() {
+  const inp = document.getElementById('f-rpe');
+  const val = parseInt(inp.value);
+  if (isNaN(val)||val<1||val>10) return;
+  rpeList.push(val); inp.value = '';
+  renderRpePills();
+}
+function removeRpe(i) { rpeList.splice(i,1); renderRpePills(); }
+function renderRpePills() {
+  document.getElementById('rpePills').innerHTML = rpeList.map((v,i)=>`
+    <div class="rpe-pill">
+      <span class="val ${rpeColor(v)}">RPE ${v}</span>
+      <button onclick="removeRpe(${i})">×</button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════
+// MODAL
+// ══════════════════════════════════
+function openModal() {
+  if (athleteProfile) {
+    document.getElementById('f-nome').value      = athleteProfile.nome || '';
+    document.getElementById('f-idade').value     = athleteProfile.idade || '';
+    document.getElementById('f-categoria').value = athleteProfile.categoria || '';
+    document.getElementById('f-posicao').value   = athleteProfile.posicao || '';
+    document.getElementById('f-clube').value     = athleteProfile.clube || '';
+    document.getElementById('f-objetivo').value  = athleteProfile.objetivo || '';
+    renderRpePills();
+  }
+  document.getElementById('skipBtn').style.display = athleteProfile ? 'block' : 'none';
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+function skipProfile() { document.getElementById('modalOverlay').classList.add('hidden'); }
+function saveProfile() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const posicao = document.getElementById('f-posicao').value;
+  if (!nome && !posicao) { document.getElementById('f-nome').focus(); return; }
+  athleteProfile = {
+    nome, idade: document.getElementById('f-idade').value.trim(),
+    categoria: document.getElementById('f-categoria').value,
+    posicao, clube: document.getElementById('f-clube').value.trim(),
+    objetivo: document.getElementById('f-objetivo').value
+  };
+  document.getElementById('modalOverlay').classList.add('hidden');
+  updateAthleteCard();
+  if (history.length === 0) {
+    const p = athleteProfile;
+    history.push({ role:'user', content:`Atleta: ${p.nome||'Atleta'}, ${p.idade} anos, ${p.posicao}, ${p.categoria}${p.clube?', '+p.clube:''}. Objetivo: ${p.objetivo||'–'}${rpeList.length?' RPE recente: '+rpeList.join(', '):''}.  Apresente-se brevemente e diga o que já sabe sobre ele.` });
+    sendToAPI(false);
+  }
+}
+
+// ══════════════════════════════════
+// ATHLETE CARD
+// ══════════════════════════════════
+function updateAthleteCard() {
+  if (!athleteProfile) return;
+  const p = athleteProfile;
+  document.getElementById('athleteCard').classList.remove('hidden');
+  document.getElementById('athleteInitials').textContent = (p.nome||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()||'?';
+  document.getElementById('athleteName').textContent = p.nome||'Atleta';
+  const meta = [p.posicao,p.categoria,p.clube].filter(Boolean);
+  document.getElementById('athleteMeta').innerHTML = meta.map((m,i)=>i===0?`<span>${m}</span>`:` · ${m}`).join('');
+  const rpeDiv = document.getElementById('rpeHistory');
+  if (rpeList.length > 0) {
+    const show = rpeList.slice(-7);
+    const colors = show.map(v=>v<=4?'#00E676':v<=7?'#FFB300':'#FF5252');
+    rpeDiv.innerHTML = `<div class="rpe-bar-wrap">${show.map((v,i)=>`<div class="rpe-bar" style="height:${v*3+4}px;background:${colors[i]}"></div>`).join('')}</div><span class="rpe-label">RPE (${show.length}d)</span>`;
+  } else { rpeDiv.innerHTML=''; }
+  const acwr = calcACWR();
+  const badge = document.getElementById('acwrBadge');
+  if (acwr !== null) {
+    badge.style.display='block';
+    const el = document.getElementById('acwrVal');
+    el.textContent = acwr.toFixed(2);
+    el.className = 'acwr-val '+(acwr>1.5?'acwr-danger':acwr<0.8?'acwr-warn':'acwr-ok');
+  } else { badge.style.display='none'; }
+}
+
+// ══════════════════════════════════
+// SCREENS
+// ══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function backToChat() {
+  stopTimer();
+  document.getElementById('doneOverlay').classList.remove('show');
+  showScreen('chatScreen');
+}
+
+// ══════════════════════════════════
+// CHAT
+// ══════════════════════════════════
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+
+function sendChip(text) {
+  document.getElementById('input').value = text;
+  sendMessage();
+}
+
+function appendMsg(role, html) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const isAi = role==='ai';
+  const label = isAi ? 'FLP' : (athleteProfile?.nome?.split(' ')[0]||'EU');
+  div.innerHTML = `<div class="avatar ${isAi?'ai':'usr'}">${isAi?'FLP':label.slice(0,2).toUpperCase()}</div><div class="bubble">${html}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className='msg ai'; div.id='typing-indicator';
+  div.innerHTML=`<div class="avatar ai">FLP</div><div class="bubble" style="padding:0"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
+}
+function removeTyping() { const el=document.getElementById('typing-indicator'); if(el)el.remove(); }
+
+function formatResponse(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n/g,'<br>');
+}
+
+function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value=''; autoResize(input);
+  appendMsg('user', text);
+
+  // detect timer intent
+  const timerKeywords = ['ao vivo','timer','tempo','cronômetro','interativo','campo agora','ao campo'];
+  const wantsTimer = timerKeywords.some(k => text.toLowerCase().includes(k));
+
+  history.push({role:'user', content: text});
+  sendToAPI(wantsTimer);
+}
+
+async function sendToAPI(timerMode = false) {
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: buildSystemPrompt(timerMode),
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Não consegui gerar uma resposta. Tente novamente.';
+    history.push({role:'assistant', content: reply});
+    removeTyping();
+
+    if (timerMode) {
+      handleTimerResponse(reply);
+    } else {
+      appendMsg('ai', formatResponse(reply));
+    }
+  } catch(err) {
+    removeTyping();
+    appendMsg('ai','⚠️ Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('input').focus();
+}
+
+// ══════════════════════════════════
+// TIMER MODE — parse & launch
+// ══════════════════════════════════
+function handleTimerResponse(raw) {
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const data = JSON.parse(clean);
+    exercises = data.exercises || [];
+    if (exercises.length === 0) throw new Error('empty');
+
+    // show session card in chat
+    const card = buildSessionCard(data);
+    appendMsg('ai', card);
+  } catch(e) {
+    appendMsg('ai', formatResponse(raw));
+  }
+}
+
+function buildSessionCard(data) {
+  const exRows = data.exercises.map((ex,i)=>`
+    <div class="ex-item">
+      <div class="ex-num">${i+1}</div>
+      <div class="ex-body">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-detail">${ex.description}</div>
+      </div>
+      <div class="ex-time">${fmtSec(ex.duration_seconds)}</div>
+    </div>`).join('');
+
+  const total = data.exercises.reduce((a,ex)=>a+ex.duration_seconds+(ex.rest_seconds||0),0);
+
+  return `<strong>⏱ ${data.title || 'Sessão ao Vivo'}</strong><br>
+<em>RPE esperado: ${data.rpe_esperado || '–'} · Duração total: ~${fmtSec(total)}</em>
+<div class="session-card">
+  <h4>Exercícios</h4>
+  ${exRows}
+  <button class="start-session-btn" onclick="launchTimer()">
+    ▶ Iniciar Treino ao Vivo
+  </button>
+</div>`;
+}
+
+function fmtSec(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════
+// TIMER LOGIC
+// ══════════════════════════════════
+function launchTimer() {
+  if (!exercises.length) return;
+  currentEx = 0; isRest = false; isRunning = false;
+  sessionStartTime = Date.now();
+  showScreen('timerScreen');
+  loadExercise(0, false);
+  renderQueue();
+}
+
+function loadExercise(idx, rest) {
+  const ex = exercises[idx];
+  if (!ex) { endSession(); return; }
+  isRest = rest;
+  secondsLeft = rest ? (ex.rest_seconds||45) : ex.duration_seconds;
+  totalSeconds = secondsLeft;
+
+  // UI
+  document.getElementById('exTitle').textContent       = rest ? '💤 Descanso' : ex.name;
+  document.getElementById('exDesc').textContent        = rest ? 'Respire. Prepare-se para o próximo exercício.' : ex.description;
+  document.getElementById('exCounter').textContent     = `Exercício ${idx+1} de ${exercises.length}`;
+  document.getElementById('timerProgressText').textContent = `${idx+1} / ${exercises.length}`;
+  document.getElementById('progressBar').style.width  = `${((idx+(rest?0.5:0))/exercises.length)*100}%`;
+
+  const phase = rest ? 'rest' : 'work';
+  const badge = document.getElementById('phaseBadge');
+  badge.textContent = rest ? 'Descanso' : (idx===0 ? 'Aquecimento' : idx===exercises.length-1 ? 'Desaquecimento' : 'Exercício');
+  badge.className = `phase-badge ${phase}`;
+
+  const ring = document.getElementById('ringFill');
+  ring.className = `ring-fill ${phase}`;
+  ring.style.strokeDashoffset = '0';
+  document.getElementById('timerPhaseLabel').textContent = rest ? 'descanso' : 'em curso';
+
+  updateDigits(secondsLeft);
+  renderQueue();
+  stopTimer();
+  isRunning = false;
+  setPauseIcon(false);
+}
+
+function toggleTimer() {
+  if (isRunning) { stopTimer(); setPauseIcon(false); }
+  else { startTimer(); setPauseIcon(true); }
+}
+
+function startTimer() {
+  isRunning = true;
+  timerInterval = setInterval(tick, 1000);
+}
+
+function stopTimer() {
+  isRunning = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function tick() {
+  secondsLeft--;
+  updateDigits(secondsLeft);
+  const pct = 1 - (secondsLeft / totalSeconds);
+  document.getElementById('ringFill').style.strokeDashoffset = (CIRCUMFERENCE * pct).toString();
+
+  if (secondsLeft <= 0) {
+    stopTimer();
+    beep();
+    // advance
+    if (!isRest && exercises[currentEx]?.rest_seconds > 0) {
+      loadExercise(currentEx, true); // rest phase
+      startTimer(); setPauseIcon(true);
+    } else {
+      currentEx++;
+      if (currentEx >= exercises.length) { endSession(); }
+      else { loadExercise(currentEx, false); startTimer(); setPauseIcon(true); }
+    }
+  }
+}
+
+function updateDigits(s) {
+  document.getElementById('timerDigits').textContent = fmtSec(Math.max(0,s));
+}
+
+function prevExercise() {
+  stopTimer(); isRunning = false; setPauseIcon(false);
+  if (currentEx > 0) { currentEx--; }
+  loadExercise(currentEx, false);
+}
+
+function nextExercise() {
+  stopTimer(); isRunning = false; setPauseIcon(false);
+  currentEx++;
+  if (currentEx >= exercises.length) { endSession(); }
+  else { loadExercise(currentEx, false); }
+}
+
+function setPauseIcon(playing) {
+  const icon = document.getElementById('playIcon');
+  icon.innerHTML = playing
+    ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    osc.start(); osc.stop(ctx.currentTime+0.4);
+  } catch(e){}
+}
+
+function renderQueue() {
+  const container = document.getElementById('queueItems');
+  container.innerHTML = exercises.map((ex,i)=>{
+    let cls = '';
+    if (i < currentEx) cls='done-q';
+    else if (i === currentEx) cls='current';
+    return `<div class="queue-item ${cls}">
+      <div class="queue-num">${i+1}</div>
+      <div class="queue-name">${ex.name}</div>
+      <div class="queue-dur">${fmtSec(ex.duration_seconds)}</div>
+    </div>`;
+  }).join('');
+}
+
+function endSession() {
+  stopTimer();
+  document.getElementById('ringFill').style.strokeDashoffset = CIRCUMFERENCE.toString();
+  document.getElementById('progressBar').style.width = '100%';
+
+  const elapsed = sessionStartTime ? Math.round((Date.now()-sessionStartTime)/1000) : 0;
+  const mins = Math.floor(elapsed/60);
+  const avgRpe = exercises.reduce((a,ex)=>a+(ex.rpe||7),0)/exercises.length;
+
+  document.getElementById('doneDuration').textContent   = `${mins}min`;
+  document.getElementById('doneExCount').textContent    = exercises.length;
+  document.getElementById('doneRpe').textContent        = Math.round(avgRpe);
+  document.getElementById('doneAthleteLabel').textContent =
+    athleteProfile?.nome ? `Excelente trabalho, ${athleteProfile.nome.split(' ')[0]}!` : 'Excelente trabalho hoje!';
+
+  document.getElementById('doneOverlay').classList.add('show');
+}
+
+function finishSession() {
+  const rpeEl = document.getElementById('doneRpe');
+  const rpe = parseInt(rpeEl.textContent);
+  if (!isNaN(rpe)) { rpeList.push(rpe); updateAthleteCard(); }
+  document.getElementById('doneOverlay').classList.remove('show');
+  backToChat();
+  appendMsg('ai', `✅ <strong>Sessão registrada!</strong> RPE ${rpe} adicionado ao histórico de ${athleteProfile?.nome?.split(' ')[0]||'seu atleta'}.<br><br>Quer analisar a carga ou gerar a próxima sessão?`);
+}
+
+// ══════════════════════════════════
+// MISC
+// ══════════════════════════════════
+document.getElementById('f-rpe').addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault();addRpe();} });
+</script>
+</body>
+</html>
