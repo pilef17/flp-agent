@@ -88,6 +88,13 @@ select tests.allowed($$insert into public.players (id, first_name, last_name, bi
   'Coach kann Spieler erfassen');
 select tests.eq((select count(*) from public.players where id = '10000000-0000-0000-0000-000000000001'), 1,
   'Ersteller-Coach sieht den Spieler sofort');
+select tests.allowed($$insert into public.players (id, first_name, last_name, birth_year, is_test_data)
+  values ('10000000-0000-0000-0000-000000000009', 'Ohne', 'Returning', 2014, true)$$,
+  'Coach: Spieler erfassen wie in der App (ID vorab, ohne RETURNING)');
+select tests.allowed($$insert into public.assessments (player_id, coach_id, assessed_on)
+  values ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000c', '2026-08-01') returning id$$,
+  'Coach: Beurteilung anlegen mit RETURNING (Regression)');
+delete from public.assessments where assessed_on = '2026-08-01';
 select tests.allowed($$insert into public.guardian_player_links (guardian_id, player_id)
   values ('00000000-0000-0000-0000-0000000000a1', '10000000-0000-0000-0000-000000000001')$$,
   'Coach kann Eltern verknüpfen');
@@ -162,7 +169,7 @@ select tests.denied($$update public.training_plans set week_start = '2026-11-02'
 select tests.denied($$insert into public.exercise_media (exercise_id, storage_path)
   values ('20000000-0000-0000-0000-000000000001', 'fremder-ordner/x.mp4')$$,
   'Medienpfad muss im Ordner der Übung liegen');
-select tests.eq((select count(*) from public.players), 1, 'Coach sieht nur zugewiesene Spieler');
+select tests.eq((select count(*) from public.players), 2, 'Coach sieht nur zugewiesene Spieler');
 select tests.denied($$update public.players set club = 'X' where id = '10000000-0000-0000-0000-000000000002'$$,
   'Coach kann fremde Spieler nicht ändern');
 select tests.denied($$insert into public.coach_player_links (coach_id, player_id)

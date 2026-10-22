@@ -26,6 +26,8 @@ describe("Rollen-Navigation", () => {
     expect(navFor(["admin"]).some((i) => i.href === "/admin/datenschutz")).toBe(true);
     expect(navFor(["coach"]).some((i) => i.href === "/admin/datenschutz")).toBe(false);
     expect(navFor(["parent"]).some((i) => i.href.startsWith("/admin"))).toBe(false);
+    expect(navFor(["parent"]).some((i) => i.href === "/entwicklung")).toBe(true);
+    expect(navFor(["coach"]).some((i) => i.href === "/admin/beurteilungen")).toBe(true);
   });
   it("schützt private Bereiche", () => {
     expect(isProtectedPath("/admin")).toBe(true);
@@ -34,6 +36,8 @@ describe("Rollen-Navigation", () => {
     expect(isProtectedPath("/uebungen/abc")).toBe(true);
     expect(isProtectedPath("/trainingsplan")).toBe(true);
     expect(isProtectedPath("/spieler/abc")).toBe(true);
+    expect(isProtectedPath("/entwicklung")).toBe(true);
+    expect(isProtectedPath("/feedback")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
     expect(isProtectedPath("/administration-fake")).toBe(false);
   });

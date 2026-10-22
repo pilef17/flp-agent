@@ -16,21 +16,23 @@ export async function createPlayer(_: FormState, formData: FormData): Promise<Fo
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
   const d = parsed.data;
   const supabase = await createClient();
-  const { data, error } = await supabase
+  // ID serverseitig vergeben: Ein Coach sieht den Spieler erst nach dem Trigger, der ihn
+  // zuweist – ein INSERT … RETURNING würde daher an der Leserichtlinie scheitern.
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("players")
     .insert({
+      id,
       first_name: d.firstName,
       last_name: d.lastName,
       birth_year: d.birthYear,
       position: d.position || null,
       dominant_foot: d.dominantFoot || null,
       club: d.club || null,
-    })
-    .select("id")
-    .single();
-  if (error || !data) return { message: "Der Spieler konnte nicht erfasst werden.", values };
+    });
+  if (error) return { message: "Der Spieler konnte nicht erfasst werden.", values };
   revalidatePath("/admin/spieler");
-  redirect(`/admin/spieler/${data.id}?erstellt=1`);
+  redirect(`/admin/spieler/${id}?erstellt=1`);
 }
 
 /**

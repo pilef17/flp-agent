@@ -8,11 +8,23 @@ import { SessionBlock } from "./SessionList";
 
 type Overview = Awaited<ReturnType<typeof loadPlayerOverview>>;
 
-export function PlayerOverview({ data, trainingsplanHref = "/trainingsplan" }: { data: Overview; trainingsplanHref?: string }) {
+export function PlayerOverview({ data, playerId }: { data: Overview; playerId: string }) {
+  const q = `?spieler=${playerId}`;
+  const trainingsplanHref = `/trainingsplan${q}`;
+  const entwicklungHref = `/entwicklung${q}`;
+  const feedbackHref = `/feedback${q}`;
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <Card className="lg:col-span-3">
-        <CardTitle eyebrow="Meine Entwicklung" title="Kompetenzprofil" />
+        <CardTitle
+          eyebrow="Entwicklung"
+          title="Kompetenzprofil"
+          action={
+            <Link href={entwicklungHref} className="text-sm text-gold hover:underline">
+              Verlauf →
+            </Link>
+          }
+        />
         {data.initial || data.current ? (
           <CompetencyChart categories={data.categories} initial={data.initial} current={data.current} />
         ) : (
@@ -24,7 +36,15 @@ export function PlayerOverview({ data, trainingsplanHref = "/trainingsplan" }: {
       </Card>
 
       <Card className="lg:col-span-2">
-        <CardTitle eyebrow="Trainer-Feedback" title="Neueste Rückmeldungen" />
+        <CardTitle
+          eyebrow="Trainer-Feedback"
+          title="Neueste Rückmeldungen"
+          action={
+            <Link href={feedbackHref} className="text-sm text-gold hover:underline">
+              Alle →
+            </Link>
+          }
+        />
         {data.feedback.length === 0 ? (
           <EmptyState title="Noch kein Feedback" text="Freigegebenes Feedback des Trainers wird hier angezeigt." />
         ) : (

@@ -89,13 +89,13 @@ export function AddExerciseForm({ planId, sessionId, exercises }: { planId: stri
       <details>
         <summary className="cursor-pointer text-xs text-mute">Dosierung anpassen (sonst Standard der Übung)</summary>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Field label="Serien" name="sets" type="number" inputMode="numeric" defaultValue={state.values?.sets} error={e.sets} />
-          <Field label="Wiederh." name="repetitions" type="number" inputMode="numeric" defaultValue={state.values?.repetitions} error={e.repetitions} />
-          <Field label="Dauer (Sek.)" name="durationSeconds" type="number" inputMode="numeric" defaultValue={state.values?.durationSeconds} error={e.durationSeconds} />
-          <Field label="Pause (Sek.)" name="restSeconds" type="number" inputMode="numeric" defaultValue={state.values?.restSeconds} error={e.restSeconds} />
+          <Field label="Serien" id={`sets-${sessionId}`} name="sets" type="number" inputMode="numeric" defaultValue={state.values?.sets} error={e.sets} />
+          <Field label="Wiederh." id={`repetitions-${sessionId}`} name="repetitions" type="number" inputMode="numeric" defaultValue={state.values?.repetitions} error={e.repetitions} />
+          <Field label="Dauer (Sek.)" id={`durationSeconds-${sessionId}`} name="durationSeconds" type="number" inputMode="numeric" defaultValue={state.values?.durationSeconds} error={e.durationSeconds} />
+          <Field label="Pause (Sek.)" id={`restSeconds-${sessionId}`} name="restSeconds" type="number" inputMode="numeric" defaultValue={state.values?.restSeconds} error={e.restSeconds} />
         </div>
         <div className="mt-3">
-          <Field label="Hinweis (optional)" name="notes" defaultValue={state.values?.notes} error={e.notes} />
+          <Field label="Hinweis (optional)" id={`notes-${sessionId}`} name="notes" defaultValue={state.values?.notes} error={e.notes} />
         </div>
       </details>
       <FormMessage state={state.ok ? {} : state} />

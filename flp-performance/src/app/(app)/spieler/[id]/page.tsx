@@ -54,7 +54,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           </div>
         ))}
       </dl>
-      <PlayerOverview data={overview} trainingsplanHref={`/trainingsplan?spieler=${player.id}`} />
+      <PlayerOverview data={overview} playerId={player.id} />
       <p className="mt-8 text-xs text-mute">
         Angaben falsch?{" "}
         <Link href="/konto" className="text-paper underline underline-offset-4">

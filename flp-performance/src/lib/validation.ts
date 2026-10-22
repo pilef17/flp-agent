@@ -167,3 +167,27 @@ export const sessionExerciseSchema = z.object({
   ...dosageFields,
   notes: z.string().trim().max(1000).optional().default(""),
 });
+
+// ---------------------------------------------------------------------------
+// Phase 3: Beurteilungen und Feedback
+// ---------------------------------------------------------------------------
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte ein Datum wählen.");
+
+export const newAssessmentSchema = z.object({
+  playerId: z.guid(),
+  kind: z.enum(["initial", "regular"]),
+  assessedOn: isoDate,
+});
+
+export const assessmentMetaSchema = z.object({
+  assessedOn: isoDate,
+  coachNotes: z.string().trim().max(4000, "Höchstens 4000 Zeichen.").optional().default(""),
+  intent: z.enum(["save", "publish"]),
+  confirmPublish: z.literal("on").optional(),
+});
+
+export const feedbackSchema = z.object({
+  title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+  body: z.string().trim().min(1, "Bitte einen Text eingeben.").max(6000, "Höchstens 6000 Zeichen."),
+  intent: z.enum(["draft", "publish"]),
+});

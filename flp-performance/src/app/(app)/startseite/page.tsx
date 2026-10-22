@@ -33,7 +33,7 @@ export default async function PlayerHome() {
   return (
     <>
       <PageHeader eyebrow="Startseite" title={`Hoi ${player.first_name}`} text="Trainiere nicht einfach mehr. Trainiere besser." />
-      <PlayerOverview data={data} />
+      <PlayerOverview data={data} playerId={player.id} />
     </>
   );
 }

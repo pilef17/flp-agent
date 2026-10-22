@@ -6,6 +6,8 @@ const PROTECTED_PREFIXES = [
   "/spieler",
   "/trainingsplan",
   "/uebungen",
+  "/entwicklung",
+  "/feedback",
   "/konto",
   "/admin",
   "/passwort-neu",
@@ -41,31 +43,41 @@ export function homePathFor(roles: readonly Role[]): string {
   return "/konto";
 }
 
-export type NavItem = { href: string; label: string };
+export type NavItem = {
+  href: string;
+  label: string;
+  /** Kurzlabel für die mobile Leiste */
+  short?: string;
+  /** In der mobilen Leiste ausblenden (über andere Seiten erreichbar) */
+  desktopOnly?: boolean;
+};
 
 export function navFor(roles: readonly Role[]): NavItem[] {
   if (isStaff(roles)) {
     const items: NavItem[] = [
-      { href: "/admin", label: "Übersicht" },
+      { href: "/admin", label: "Übersicht", short: "Start" },
       { href: "/admin/spieler", label: "Spieler" },
       { href: "/admin/uebungen", label: "Übungen" },
+      { href: "/admin/beurteilungen", label: "Beurteilungen", short: "Bewertung" },
     ];
-    if (roles.includes("admin")) items.push({ href: "/admin/datenschutz", label: "Datenschutz" });
+    if (roles.includes("admin")) items.push({ href: "/admin/datenschutz", label: "Datenschutz", desktopOnly: true });
     items.push({ href: "/konto", label: "Konto" });
     return items;
   }
   if (roles.includes("parent")) {
     return [
-      { href: "/elternbereich", label: "Übersicht" },
-      { href: "/trainingsplan", label: "Trainingsplan" },
+      { href: "/elternbereich", label: "Übersicht", short: "Start" },
+      { href: "/trainingsplan", label: "Trainingsplan", short: "Plan" },
       { href: "/uebungen", label: "Übungen" },
+      { href: "/entwicklung", label: "Entwicklung" },
       { href: "/konto", label: "Konto" },
     ];
   }
   return [
-    { href: "/startseite", label: "Startseite" },
-    { href: "/trainingsplan", label: "Trainingsplan" },
+    { href: "/startseite", label: "Startseite", short: "Start" },
+    { href: "/trainingsplan", label: "Trainingsplan", short: "Plan" },
     { href: "/uebungen", label: "Übungen" },
+    { href: "/entwicklung", label: "Entwicklung" },
     { href: "/konto", label: "Konto" },
   ];
 }

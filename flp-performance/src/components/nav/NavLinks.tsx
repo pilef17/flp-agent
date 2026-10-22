@@ -10,18 +10,19 @@ export function NavLinks({ items, mobile = false }: { items: NavItem[]; mobile?:
     pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`));
 
   if (mobile) {
+    const visible = items.filter((i) => !i.desktopOnly);
     return (
-      <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
-        {items.map((item) => (
+      <ul className="grid" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))` }}>
+        {visible.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
-              className={`flex min-h-14 items-center justify-center px-1 text-center text-[0.6875rem] font-medium uppercase tracking-wider ${
+              className={`flex min-h-14 items-center justify-center px-0.5 text-center text-[0.625rem] font-medium uppercase tracking-wide ${
                 isActive(item.href) ? "text-gold" : "text-mute"
               }`}
             >
-              {item.label}
+              {item.short ?? item.label}
             </Link>
           </li>
         ))}

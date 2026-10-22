@@ -1,5 +1,23 @@
 # Status
 
+## Phase 3 – Entwicklung (umgesetzt)
+
+| Bereich | Wie getestet |
+|---|---|
+| Admin «Beurteilungen»: offene Entwürfe, Spieler ohne Erstbeurteilung, zuletzt veröffentlicht, Feedback-Entwürfe | E2E Phase 3 |
+| Beurteilung erfassen: Erst-/Folgebeurteilung, Datum (nicht in der Zukunft), 8 Kompetenzen mit 1–5 oder «n. b.», Notiz je Kompetenz, Gesamtnotiz, Entwurf speichern, Veröffentlichen nur mit Bestätigung und mindestens einem Wert, Entwurf verwerfen. Danach nur noch lesbar (Datenbank-Trigger). | E2E + RLS |
+| Trainer-Feedback: erstellen (veröffentlicht oder Entwurf), bearbeiten, zurückziehen, Entwurf löschen | E2E |
+| «Meine Entwicklung»: Vergleich Erstbeurteilung (rot) ↔ aktuell (gold), Verlauf je Kompetenz als Kleindiagramme (Lücke bei «n. b.», keine Interpolation), Tabelle aller Beurteilungen, Kommentare | E2E |
+| «Trainer-Feedback»-Seite für Eltern/Spieler, Kinderwahl bei mehreren Kindern | E2E |
+| Navigation: Eltern/Spieler mit «Entwicklung»; Admin mit «Beurteilungen»; mobile Leiste mit Kurzlabels | E2E |
+
+**In Phase 3 gefundene und behobene Fehler:**
+- *Coach ohne Admin-Rolle konnte keine Spieler erfassen* (seit Phase 1, nur mit Admin getestet): Die neue Zeile war für die Leserichtlinie noch nicht sichtbar (`INSERT … RETURNING`). Die ID wird jetzt serverseitig vergeben, ohne Lockerung der Rechte.
+- *Beurteilung anlegen schlug fehl* aus demselben Grund: Leserichtlinie in Migration `20261024000001` auf Zeilenwerte umgestellt (inhaltlich identisch).
+- Doppelte Feld-IDs auf der Spielerseite und im Plan-Builder (Beschriftungen zeigten auf das falsche Feld).
+
+Diagrammfarben: Rot/Gold sind Markenvorgaben. Der Palette-Check bestätigt Kontrast und Farbsehschwäche-Trennung; Gold liegt ausserhalb des empfohlenen Helligkeitsbands. Deshalb zusätzliche Kodierung: Erstbeurteilung = Ring, aktuell = gefüllter Punkt, Werte als Zahl, Tabelle als Alternative.
+
 ## Phase 2 – Coaching (umgesetzt)
 
 | Bereich | Wie getestet |
@@ -39,7 +57,6 @@ E2E Phase 2: 43/43 Prüfungen, E2E Phase 1 erneut 26/26, Unit-Tests 30/30.
 ## Noch offen
 
 - **Phase 2 (Rest):** Spieler-Login durch Eltern anlegen (Einwilligung «player_account» wird bereits erfasst), Plan der Vorwoche kopieren, Upload-Fortschrittsanzeige.
-- **Phase 3:** Admin-Beurteilungen erfassen/veröffentlichen, Verlauf aller Beurteilungen, Feedback-Editor, Seite «Meine Entwicklung»/«Trainer-Feedback».
 - **Phase 4:** Programme, Programm-Details, Stripe Checkout, Webhook (`checkout.session.completed`, Signaturprüfung, Idempotenz), Meine Käufe, Admin Produkte & Bestellungen.
 - **Phase 5:** E2E-Suite ins Repo/CI übernehmen (mit `supabase start`), Zugänglichkeitsprüfung, Sicherheitsreview, Datenexport automatisieren (aktuell manuell), Service Worker/Offline.
 - Generierte DB-Typen (`supabase gen types typescript`) statt manueller Typ-Casts.

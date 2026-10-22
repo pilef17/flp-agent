@@ -84,7 +84,7 @@ export default async function ParentDashboard() {
                   </div>
                 )}
 
-                <PlayerOverview data={overviews[i]} trainingsplanHref={`/trainingsplan?spieler=${player.id}`} />
+                <PlayerOverview data={overviews[i]} playerId={player.id} />
 
                 <Card className="mt-6">
                   <CardTitle eyebrow="Datenschutz" title="Einwilligungen" />

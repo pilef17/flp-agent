@@ -10,6 +10,9 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { InviteGuardianForm } from "../Forms";
 import { revokeGuardian, setCoachingAccess } from "../actions";
 import { NewPlanSection } from "../../plaene/Forms";
+import { NewAssessmentForm } from "../../beurteilungen/Forms";
+import { FeedbackForm } from "../../feedback/FeedbackForm";
+import { createFeedback } from "../../feedback/actions";
 import { addDays, mondayOf, todayInSwitzerland, weekLabel } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Spielerprofil" };
@@ -43,6 +46,12 @@ export default async function PlayerAdminPage({
     .order("week_start", { ascending: false })
     .limit(20);
   const nextMonday = addDays(mondayOf(todayInSwitzerland()), 7);
+
+  const [{ data: assessments }, { data: feedback }] = await Promise.all([
+    supabase.from("assessments").select("id, kind, assessed_on, status").eq("player_id", id).order("assessed_on", { ascending: false }),
+    supabase.from("coach_feedback").select("id, title, status, created_at, published_at").eq("player_id", id).order("created_at", { ascending: false }).limit(20),
+  ]);
+  const hasInitial = (assessments ?? []).some((a) => a.kind === "initial");
 
   type GuardianLink = { id: string; relationship: string; status: string; profiles: { full_name: string; email: string | null } | null };
   const guardians = ((player.guardian_player_links ?? []) as unknown as GuardianLink[]).filter((g) => g.status === "active");
@@ -165,6 +174,52 @@ export default async function PlayerAdminPage({
             )}
           </Card>
         </div>
+      </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <div id="beurteilungen" className="scroll-mt-24" />
+          <CardTitle eyebrow="Entwicklung" title="Beurteilungen" />
+          {(assessments ?? []).length === 0 ? (
+            <p className="mb-5 text-sm text-mute">Noch keine Beurteilung. Beginne mit der Erstbeurteilung.</p>
+          ) : (
+            <ul className="mb-6 divide-y divide-line">
+              {assessments!.map((a) => (
+                <li key={a.id}>
+                  <Link href={`/admin/beurteilungen/${a.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-gold">
+                    <span>
+                      <span className="font-medium">{a.kind === "initial" ? "Erstbeurteilung" : "Folgebeurteilung"}</span>
+                      <span className="block text-xs text-mute">{formatDate(a.assessed_on)}</span>
+                    </span>
+                    {a.status === "published" ? <Badge tone="ok">Veröffentlicht</Badge> : <Badge tone="danger">Entwurf</Badge>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="eyebrow mb-4">Neue Beurteilung</p>
+          <NewAssessmentForm playerId={player.id} allowInitial={!hasInitial} today={todayInSwitzerland()} />
+        </Card>
+
+        <Card>
+          <CardTitle eyebrow="Trainer-Feedback" title="Rückmeldungen" />
+          {(feedback ?? []).length > 0 && (
+            <ul className="mb-6 divide-y divide-line">
+              {feedback!.map((f) => (
+                <li key={f.id}>
+                  <Link href={`/admin/feedback/${f.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-gold">
+                    <span>
+                      <span className="font-medium">{f.title}</span>
+                      <span className="block text-xs text-mute">{formatDate(f.published_at ?? f.created_at)}</span>
+                    </span>
+                    {f.status === "published" ? <Badge tone="ok">Veröffentlicht</Badge> : <Badge tone="danger">Entwurf</Badge>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="eyebrow mb-4">Neues Feedback</p>
+          <FeedbackForm action={createFeedback.bind(null, player.id)} />
+        </Card>
       </div>
     </>
   );
