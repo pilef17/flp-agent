@@ -1,5 +1,21 @@
 # Status
 
+## Phase 4 – Shop (umgesetzt)
+
+| Bereich | Wie getestet |
+|---|---|
+| Migration `20261025000001_commerce.sql`: `create_pending_order`, `fulfill_checkout` (atomar, idempotent über `stripe_events`, prüft Session, Betrag und Währung), `update_order_from_stripe` (abgelaufen, fehlgeschlagen, Rückerstattung → Zugang entzogen). Nur Service-Rolle darf sie aufrufen. Mindestpreis CHF 0.50, Dateipfade pro Produkt. | RLS-Tests (jetzt 107/107) |
+| Öffentlicher Katalog «Programme» und «Programm-Details» (Preis, Zugangsdauer, Inhaltsübersicht nur mit Titeln) | E2E Phase 4 |
+| Kauf: Stripe Checkout (gehostet), Preis nur aus der Datenbank, Idempotency-Key pro Bestellung, Bestellungen aus dem Testmodus als `is_test_data` markiert | E2E gegen stripe-mock |
+| Webhook `/api/stripe/webhook`: Signaturprüfung, Zugang erst nach `payment_status = paid`, 500 bei DB-Fehler (Stripe wiederholt), Teil-Rückerstattungen entziehen keinen Zugang | 8 Unit-Tests + E2E mit signierten Events |
+| «Meine Käufe» (Programme mit Ablaufdatum, Bestellverlauf), Programminhalt (Lektionen, Übungen, Videos via Signed URL) | E2E |
+| Admin Shop: Produkte erstellen/bearbeiten (Preis CHF frei konfigurierbar, Zugangsdauer, Slug, Reihenfolge), aktivieren/deaktivieren, Titelbild, Inhalte (Lektion, Übung, Video) sortieren/entfernen | E2E (ohne Bild-/Video-Upload) |
+| Admin Bestellungen & Zugänge: Umsatz, Statusfilter, Testbestellungen ausgeblendet, manuelle Zugänge vergeben/entziehen (Audit-Log) | E2E |
+
+E2E Phase 4: 47/47. Unit-Tests: 46/46.
+
+**Nicht getestet in Phase 4:** echter Stripe-Testmodus (bisher nur stripe-mock + selbst signierte Webhooks), TWINT/Karten auf der Stripe-Seite, Upload von Titelbild und Programmvideos (kein Storage-Server in der Testumgebung). Siehe DEPLOYMENT.md → «Stripe einrichten».
+
 ## Phase 3 – Entwicklung (umgesetzt)
 
 | Bereich | Wie getestet |
@@ -57,7 +73,6 @@ E2E Phase 2: 43/43 Prüfungen, E2E Phase 1 erneut 26/26, Unit-Tests 30/30.
 ## Noch offen
 
 - **Phase 2 (Rest):** Spieler-Login durch Eltern anlegen (Einwilligung «player_account» wird bereits erfasst), Plan der Vorwoche kopieren, Upload-Fortschrittsanzeige.
-- **Phase 4:** Programme, Programm-Details, Stripe Checkout, Webhook (`checkout.session.completed`, Signaturprüfung, Idempotenz), Meine Käufe, Admin Produkte & Bestellungen.
 - **Phase 5:** E2E-Suite ins Repo/CI übernehmen (mit `supabase start`), Zugänglichkeitsprüfung, Sicherheitsreview, Datenexport automatisieren (aktuell manuell), Service Worker/Offline.
 - Generierte DB-Typen (`supabase gen types typescript`) statt manueller Typ-Casts.
 - Rechtliche Punkte: siehe `SICHERHEIT-DATENSCHUTZ.md`.

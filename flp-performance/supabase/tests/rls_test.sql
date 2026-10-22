@@ -5,9 +5,9 @@ set client_min_messages = warning;
 
 create schema tests;
 create table tests.results (id serial, name text, passed boolean, detail text);
-grant usage on schema tests to anon, authenticated;
-grant all on tests.results to anon, authenticated;
-grant usage on sequence tests.results_id_seq to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
+grant all on tests.results to anon, authenticated, service_role;
+grant usage on sequence tests.results_id_seq to anon, authenticated, service_role;
 
 create function tests.login(uid uuid) returns void language plpgsql as $$
 begin
@@ -56,7 +56,7 @@ begin
     insert into tests.results (name, passed, detail) values (name, false, sqlerrm);
   end;
 end $$;
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- Testdaten (fiktiv, nur in dieser Testdatenbank)
@@ -345,6 +345,61 @@ select tests.allowed($$delete from public.players where id = '10000000-0000-0000
   'Admin kann Spieler vollständig löschen (Löschantrag)');
 select tests.eq((select count(*) from public.assessments), 0, 'Beurteilungen werden mitgelöscht');
 select tests.logout();
+
+-- Shop: Bestellungen nur über Service-Rolle, idempotente Verbuchung
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.denied($$select public.create_pending_order('00000000-0000-0000-0000-0000000000b1', (select id from public.products where slug = 'flp-training'))$$,
+  'Eltern können keine Bestellung über die Funktion anlegen');
+select tests.denied($$select public.fulfill_checkout('evt_x', 'checkout.session.completed', gen_random_uuid(), 'cs_x', 'pi_x', 3900, 'chf')$$,
+  'Eltern können keine Zahlung verbuchen');
+select tests.logout();
+
+set role service_role;
+select public.create_pending_order('00000000-0000-0000-0000-0000000000b1', (select id from public.products where slug = 'flp-training')) as oid \gset
+update public.orders set stripe_checkout_session_id = 'cs_test_1', is_test_data = true where id = :'oid';
+select tests.ok(public.fulfill_checkout('evt_1', 'checkout.session.completed', :'oid', 'cs_test_1', 'pi_1', 100, 'chf') = 'mismatch',
+  'Abweichender Betrag wird nicht verbucht');
+select tests.eq((select count(*) from public.entitlements where order_id = :'oid'), 0, 'Kein Zugang bei Betragsabweichung');
+select tests.ok(public.fulfill_checkout('evt_2', 'checkout.session.completed', :'oid', 'cs_falsch', 'pi_1', 3900, 'chf') = 'mismatch',
+  'Fremde Checkout-Session wird nicht verbucht');
+select tests.ok(public.fulfill_checkout('evt_3', 'checkout.session.completed', :'oid', 'cs_test_1', 'pi_1', 3900, 'chf') = 'fulfilled',
+  'Korrekte Zahlung wird verbucht');
+select tests.ok(public.fulfill_checkout('evt_3', 'checkout.session.completed', :'oid', 'cs_test_1', 'pi_1', 3900, 'chf') = 'duplicate',
+  'Gleiches Event wird nur einmal verarbeitet');
+select tests.ok(public.fulfill_checkout('evt_4', 'checkout.session.async_payment_succeeded', :'oid', 'cs_test_1', 'pi_1', 3900, 'chf') = 'duplicate',
+  'Bereits bezahlte Bestellung wird nicht doppelt verbucht');
+select tests.eq((select count(*) from public.entitlements where order_id = :'oid'), 1, 'Genau ein Zugang pro Kauf');
+select tests.ok(public.update_order_from_stripe('evt_5', 'checkout.session.expired', 'cs_test_1', null, 'canceled') = 'ignored',
+  'Bezahlte Bestellung wird durch spätere Events nicht zurückgestuft');
+select tests.ok((select status::text from public.orders where id = :'oid') = 'paid', 'Bestellung bleibt bezahlt');
+select tests.ok(exists (select 1 from public.audit_logs where entity_type = 'orders' and entity_id = :'oid'), 'Bestellung wird protokolliert');
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.eq((select count(*) from public.orders), 1, 'Käufer sieht eigene Bestellung');
+select tests.eq((select count(*) from public.order_items), 1, 'Käufer sieht Bestellpositionen');
+select tests.eq((select count(*) from public.product_content), 1, 'Nach Kauf: Programminhalte sichtbar');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.orders), 0, 'Andere Eltern sehen fremde Bestellungen nicht');
+select tests.logout();
+
+set role service_role;
+select tests.ok(public.update_order_from_stripe('evt_6', 'charge.refunded', null, 'pi_1', 'refunded') = 'refunded', 'Rückerstattung verbucht');
+select tests.ok((select revoked_at is not null from public.entitlements where order_id = :'oid'), 'Rückerstattung entzieht Zugang');
+select public.create_pending_order('00000000-0000-0000-0000-0000000000b1', (select id from public.products where slug = 'flp-training')) as oid2 \gset
+update public.orders set stripe_checkout_session_id = 'cs_test_2' where id = :'oid2';
+select tests.ok(public.update_order_from_stripe('evt_7', 'checkout.session.expired', 'cs_test_2', null, 'canceled') = 'canceled', 'Abgelaufene Session storniert Bestellung');
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.eq((select count(*) from public.product_content), 0, 'Nach Rückerstattung: keine Programminhalte');
+select tests.logout();
+
+set role service_role;
+select tests.denied($$select public.create_pending_order('00000000-0000-0000-0000-0000000000b1', (select id from public.products where slug = 'flp-nutrition'))$$,
+  'Inaktives Produkt kann nicht bestellt werden');
+reset role;
+select tests.denied($$update public.products set price_cents = 10 where slug = 'flp-training'$$, 'Preis unter CHF 0.50 abgelehnt');
 
 -- ---------------------------------------------------------------------------
 select format('%s %s%s', case when passed then 'ok  ' else 'FAIL' end, name,

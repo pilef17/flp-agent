@@ -191,3 +191,40 @@ export const feedbackSchema = z.object({
   body: z.string().trim().min(1, "Bitte einen Text eingeben.").max(6000, "Höchstens 6000 Zeichen."),
   intent: z.enum(["draft", "publish"]),
 });
+
+// ---------------------------------------------------------------------------
+// Phase 4: Shop
+// ---------------------------------------------------------------------------
+export const productSchema = z.object({
+  title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]{2,60}$/, "Nur Kleinbuchstaben, Zahlen und Bindestriche (2–60 Zeichen).")
+    .optional()
+    .or(z.literal("")),
+  summary: z.string().trim().max(300, "Höchstens 300 Zeichen.").optional().default(""),
+  description: z.string().trim().max(10000).optional().default(""),
+  price: z.string().trim().min(1, "Bitte einen Preis eingeben."),
+  accessDays: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    z.coerce.number().int().min(1, "Mindestens 1 Tag.").max(3650, "Höchstens 3650 Tage.").nullable(),
+  ),
+  position: z.coerce.number().int().min(0).max(999).optional().default(0),
+});
+
+export const articleSchema = z.object({
+  productId: z.guid(),
+  title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(160),
+  body: z.string().trim().min(1, "Bitte einen Text eingeben.").max(20000),
+});
+
+export const grantSchema = z.object({
+  email,
+  productId: z.guid({ error: "Bitte ein Programm wählen." }),
+  accessDays: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    z.coerce.number().int().min(1).max(3650).nullable(),
+  ),
+});

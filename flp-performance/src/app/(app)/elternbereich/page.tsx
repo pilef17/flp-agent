@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 import type { Metadata } from "next";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -50,7 +51,8 @@ export default async function ParentDashboard() {
       {players.length === 0 ? (
         <EmptyState
           title="Noch kein Kind verknüpft"
-          text="Nach dem ersten Training verknüpft der Trainer dein Konto mit dem Spielerprofil deines Kindes. Danach erscheinen hier Trainingspläne und Entwicklung."
+          text="Nach dem ersten Training verknüpft der Trainer dein Konto mit dem Spielerprofil deines Kindes. Danach erscheinen hier Trainingspläne und Entwicklung. Digitale Programme kannst du jederzeit separat kaufen."
+          action={<ButtonLink href="/programme" variant="secondary">Programme ansehen</ButtonLink>}
         />
       ) : (
         <div className="space-y-14">

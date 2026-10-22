@@ -28,6 +28,12 @@ describe("Rollen-Navigation", () => {
     expect(navFor(["parent"]).some((i) => i.href.startsWith("/admin"))).toBe(false);
     expect(navFor(["parent"]).some((i) => i.href === "/entwicklung")).toBe(true);
     expect(navFor(["coach"]).some((i) => i.href === "/admin/beurteilungen")).toBe(true);
+    expect(navFor(["coach"]).some((i) => i.href === "/admin/produkte")).toBe(false);
+    expect(navFor(["admin"]).some((i) => i.href === "/admin/produkte")).toBe(true);
+    // Mobile Leiste hat höchstens 5 Einträge
+    for (const roles of [["admin"], ["coach"], ["parent"], ["player"]] as const) {
+      expect(navFor(roles).filter((i) => !i.desktopOnly).length).toBeLessThanOrEqual(5);
+    }
   });
   it("schützt private Bereiche", () => {
     expect(isProtectedPath("/admin")).toBe(true);
@@ -38,6 +44,10 @@ describe("Rollen-Navigation", () => {
     expect(isProtectedPath("/spieler/abc")).toBe(true);
     expect(isProtectedPath("/entwicklung")).toBe(true);
     expect(isProtectedPath("/feedback")).toBe(true);
+    expect(isProtectedPath("/meine-kaeufe")).toBe(true);
+    expect(isProtectedPath("/programme")).toBe(false);
+    expect(isProtectedPath("/programme/flp-training")).toBe(false);
+    expect(isProtectedPath("/programme/flp-training/inhalt")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
     expect(isProtectedPath("/administration-fake")).toBe(false);
   });

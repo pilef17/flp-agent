@@ -8,12 +8,15 @@ const PROTECTED_PREFIXES = [
   "/uebungen",
   "/entwicklung",
   "/feedback",
+  "/meine-kaeufe",
   "/konto",
   "/admin",
   "/passwort-neu",
 ];
 
 export function isProtectedPath(pathname: string): boolean {
+  // Programm-Katalog ist öffentlich, die gekauften Inhalte nicht
+  if (/^\/programme\/[^/]+\/inhalt(\/|$)/.test(pathname)) return true;
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
@@ -60,8 +63,11 @@ export function navFor(roles: readonly Role[]): NavItem[] {
       { href: "/admin/uebungen", label: "Übungen" },
       { href: "/admin/beurteilungen", label: "Beurteilungen", short: "Bewertung" },
     ];
-    if (roles.includes("admin")) items.push({ href: "/admin/datenschutz", label: "Datenschutz", desktopOnly: true });
-    items.push({ href: "/konto", label: "Konto" });
+    if (roles.includes("admin")) {
+      items.push({ href: "/admin/produkte", label: "Shop" });
+      items.push({ href: "/admin/datenschutz", label: "Datenschutz", desktopOnly: true });
+    }
+    items.push({ href: "/konto", label: "Konto", desktopOnly: true });
     return items;
   }
   if (roles.includes("parent")) {
@@ -70,7 +76,8 @@ export function navFor(roles: readonly Role[]): NavItem[] {
       { href: "/trainingsplan", label: "Trainingsplan", short: "Plan" },
       { href: "/uebungen", label: "Übungen" },
       { href: "/entwicklung", label: "Entwicklung" },
-      { href: "/konto", label: "Konto" },
+      { href: "/programme", label: "Programme" },
+      { href: "/konto", label: "Konto", desktopOnly: true },
     ];
   }
   return [
@@ -78,6 +85,7 @@ export function navFor(roles: readonly Role[]): NavItem[] {
     { href: "/trainingsplan", label: "Trainingsplan", short: "Plan" },
     { href: "/uebungen", label: "Übungen" },
     { href: "/entwicklung", label: "Entwicklung" },
-    { href: "/konto", label: "Konto" },
+    { href: "/programme", label: "Programme" },
+    { href: "/konto", label: "Konto", desktopOnly: true },
   ];
 }

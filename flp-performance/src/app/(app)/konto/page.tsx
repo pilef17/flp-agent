@@ -34,9 +34,12 @@ export default async function AccountPage() {
           <CardTitle eyebrow="Profil" title="Persönliche Angaben" />
           <p className="mb-5 text-sm text-mute">E-Mail: {viewer.email}</p>
           <ProfileForm fullName={profile?.full_name ?? ""} phone={profile?.phone ?? ""} />
-          <p className="mt-6 text-sm">
+          <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link href="/passwort-neu" className="text-gold underline-offset-4 hover:underline">
               Passwort ändern
+            </Link>
+            <Link href="/meine-kaeufe" className="text-gold underline-offset-4 hover:underline">
+              Meine Käufe
             </Link>
           </p>
         </Card>

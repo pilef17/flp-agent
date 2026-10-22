@@ -24,6 +24,8 @@
 6. **Verzeichnis der Bearbeitungstätigkeiten**, Aufbewahrungs- und Löschfristen festlegen (z. B. Löschung nach Ende des Coachings).
 7. **Datenexport**: Anträge werden erfasst und verwaltet; die Erstellung des Exports ist noch manuell (siehe STATUS).
 8. **Datenschutzverletzungen**: Meldeprozess an den EDÖB definieren.
-9. **AGB / Widerrufs- und Rückerstattungsregeln** für digitale Programme, MWST-Pflicht prüfen.
+9. **AGB / Widerrufs- und Rückerstattungsregeln** für digitale Programme, MWST-Pflicht prüfen (ab CHF 100’000 Umsatz). Preise werden derzeit ohne MWST-Hinweis angezeigt; Stripe Tax ist nicht aktiviert.
+   Impressum und Kontaktangaben im Shop ergänzen (UWG Art. 3 Abs. 1 lit. s).
+   Ernährungsinhalte: allgemeiner Hinweis «keine medizinische Beratung» ist eingebaut – Texte fachlich prüfen lassen.
 10. **Auth-Härtung** in Supabase: Leaked-Password-Protection, Rate Limits, ggf. MFA für Admin/Coaches, eigener SMTP mit SPF/DKIM.
 11. **Backups/PITR** im Supabase-Plan aktivieren.

@@ -3,7 +3,7 @@
 Plattform für individuelles Fussballtraining (Schweiz): Spielerprofile, Trainingspläne, Beurteilungen,
 Elternbereich und (ab Phase 4) digitale Programme.
 
-**Stack:** Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Supabase (Auth, PostgreSQL, Storage, RLS) · Stripe Checkout (Phase 4)
+**Stack:** Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Supabase (Auth, PostgreSQL, Storage, RLS) · Stripe Checkout
 
 ## Lokal starten
 
@@ -54,7 +54,7 @@ npm run test:db                 # RLS-/Policy-Tests gegen lokales PostgreSQL (ps
 
 `npm run test:db` erstellt eine Wegwerf-Datenbank `flp_rls_test`, bildet die Supabase-Objekte `auth`/`storage`
 minimal nach (`supabase/tests/supabase_stub.sql`), wendet alle Migrationen an und führt
-`supabase/tests/rls_test.sql` aus (aktuell 85 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
+`supabase/tests/rls_test.sql` aus (aktuell 107 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
 
 ## Struktur
 
@@ -71,9 +71,13 @@ flp-performance/
 │   │   │   ├── uebungen/      Übungsbibliothek + Details
 │   │   │   ├── entwicklung/   Meine Entwicklung (Vergleich, Verlauf, Tabelle)
 │   │   │   ├── feedback/      Trainer-Feedback
+│   │   │   ├── meine-kaeufe/  Käufe und Zugänge
+│   │   │   └── programme/[slug]/inhalt  Gekaufte Programminhalte
 │   │   │   ├── konto/         Profil, Datenschutz-Anträge
 │   │   │   ├── passwort-neu/
-│   │   │   └── admin/         Übersicht, Spieler, Übungen, Plan-Builder, Beurteilungen, Feedback, Datenschutz
+│   │   │   └── admin/         Übersicht, Spieler, Übungen, Plan-Builder, Beurteilungen, Feedback, Shop, Datenschutz
+│   │   ├── (shop)/programme   Öffentlicher Katalog + Programm-Details, Checkout
+│   │   ├── api/stripe/webhook Stripe-Webhook (Signatur, idempotent)
 │   │   ├── auth/confirm       E-Mail-Links (PKCE / token_hash)
 │   │   ├── auth/einladung     Einladungslinks (Session im URL-Fragment)
 │   │   └── datenschutz/       Datenschutzerklärung (ENTWURF)

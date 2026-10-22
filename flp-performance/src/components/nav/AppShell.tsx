@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
 import { signOut } from "@/app/(auth)/actions";
 import { navFor, homePathFor } from "@/lib/routes";
@@ -25,10 +26,13 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
             <NavLinks items={items} />
           </nav>
           <div className="flex items-center gap-4">
-            <div className="hidden text-right leading-tight sm:block">
-              <p className="text-sm">{viewer.fullName || viewer.email}</p>
-              <p className="text-[0.6875rem] uppercase tracking-wider text-gold">{ROLE_LABEL[primaryRole]}</p>
-            </div>
+            <Link href="/konto" className="hidden text-right leading-tight hover:text-gold sm:block">
+              <span className="block text-sm">{viewer.fullName || viewer.email}</span>
+              <span className="block text-[0.6875rem] uppercase tracking-wider text-gold">{ROLE_LABEL[primaryRole]}</span>
+            </Link>
+            <Link href="/konto" className="min-h-11 content-center text-sm text-mute hover:text-paper md:hidden">
+              Konto
+            </Link>
             <form action={signOut}>
               <button className="min-h-11 text-sm text-mute hover:text-paper" type="submit">
                 Abmelden

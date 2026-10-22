@@ -23,3 +23,10 @@ export const serverEnv = {
       process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY,
     ),
 };
+
+export const stripeEnv = {
+  secretKey: () => required("STRIPE_SECRET_KEY", process.env.STRIPE_SECRET_KEY),
+  webhookSecret: () => required("STRIPE_WEBHOOK_SECRET", process.env.STRIPE_WEBHOOK_SECRET),
+  /** Nur für lokale Tests mit stripe-mock, z.B. http://localhost:12111 */
+  apiBase: () => process.env.STRIPE_API_BASE || null,
+};
