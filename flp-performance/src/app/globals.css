@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* FLP Performance – Design-Tokens */
+@theme {
+  --color-ink: #101113;          /* Tiefschwarz – Hintergrund */
+  --color-graphite: #222326;     /* Dunkelgrau – Flächen */
+  --color-graphite-2: #2c2d31;   /* Hover / Rahmen */
+  --color-line: #34353a;         /* Linien */
+  --color-gold: #c7a45a;         /* Gedämpftes Gold – Akzent */
+  --color-gold-soft: #d8bd82;
+  --color-paper: #ffffff;
+  --color-mute: #a3a4a9;         /* Sekundärtext (AA auf ink) */
+  --color-initial: #d2504a;      /* Erstbeurteilung (rot) */
+  --color-ok: #6fbf8e;
+  --color-danger: #e0675f;
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Variable", "Inter Variable", ui-sans-serif, sans-serif;
+
+  --radius-card: 0.375rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-stretch: 85%;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+  }
+  .field {
+    width: 100%;
+    background: var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    padding: 0.75rem 0.875rem;
+    font-size: 1rem; /* verhindert Zoom auf iOS */
+    color: var(--color-paper);
+    transition: border-color 120ms ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-gold);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
