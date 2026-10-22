@@ -32,4 +32,6 @@ export async function toggleCompletion(formData: FormData) {
   }
   revalidatePath("/startseite");
   revalidatePath("/elternbereich");
+  revalidatePath("/trainingsplan");
+  revalidatePath("/spieler", "layout");
 }

@@ -54,7 +54,7 @@ npm run test:db                 # RLS-/Policy-Tests gegen lokales PostgreSQL (ps
 
 `npm run test:db` erstellt eine Wegwerf-Datenbank `flp_rls_test`, bildet die Supabase-Objekte `auth`/`storage`
 minimal nach (`supabase/tests/supabase_stub.sql`), wendet alle Migrationen an und führt
-`supabase/tests/rls_test.sql` aus (aktuell 79 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
+`supabase/tests/rls_test.sql` aus (aktuell 83 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
 
 ## Struktur
 
@@ -66,9 +66,12 @@ flp-performance/
 │   │   ├── (app)/             Geschützter Bereich (AppShell)
 │   │   │   ├── startseite/    Spieler-Startseite
 │   │   │   ├── elternbereich/ Eltern-Dashboard, Einwilligungen
+│   │   │   ├── spieler/[id]   Spielerprofil (Eltern/Spieler)
+│   │   │   ├── trainingsplan/ Trainingskalender (Woche)
+│   │   │   ├── uebungen/      Übungsbibliothek + Details
 │   │   │   ├── konto/         Profil, Datenschutz-Anträge
 │   │   │   ├── passwort-neu/
-│   │   │   └── admin/         Übersicht, Spieler, Datenschutz-Anträge
+│   │   │   └── admin/         Übersicht, Spieler, Übungen, Trainingsplan-Builder, Datenschutz
 │   │   ├── auth/confirm       E-Mail-Links (PKCE / token_hash)
 │   │   ├── auth/einladung     Einladungslinks (Session im URL-Fragment)
 │   │   └── datenschutz/       Datenschutzerklärung (ENTWURF)

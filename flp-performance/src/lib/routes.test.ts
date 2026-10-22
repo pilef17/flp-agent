@@ -31,6 +31,9 @@ describe("Rollen-Navigation", () => {
     expect(isProtectedPath("/admin")).toBe(true);
     expect(isProtectedPath("/admin/spieler/123")).toBe(true);
     expect(isProtectedPath("/elternbereich")).toBe(true);
+    expect(isProtectedPath("/uebungen/abc")).toBe(true);
+    expect(isProtectedPath("/trainingsplan")).toBe(true);
+    expect(isProtectedPath("/spieler/abc")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
     expect(isProtectedPath("/administration-fake")).toBe(false);
   });

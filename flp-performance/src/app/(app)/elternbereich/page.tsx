@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -62,7 +63,9 @@ export default async function ParentDashboard() {
                   <div>
                     <p className="eyebrow mb-1">Spielerprofil</p>
                     <h2 id={`p-${player.id}`} className="text-3xl font-extrabold">
-                      {player.first_name} {player.last_name}
+                      <Link href={`/spieler/${player.id}`} className="hover:text-gold">
+                        {player.first_name} {player.last_name}
+                      </Link>
                     </h2>
                     <p className="mt-1 text-sm text-mute">
                       {ageFromBirthYear(player.birth_year)} Jahre
@@ -81,7 +84,7 @@ export default async function ParentDashboard() {
                   </div>
                 )}
 
-                <PlayerOverview data={overviews[i]} />
+                <PlayerOverview data={overviews[i]} trainingsplanHref={`/trainingsplan?spieler=${player.id}`} />
 
                 <Card className="mt-6">
                   <CardTitle eyebrow="Datenschutz" title="Einwilligungen" />

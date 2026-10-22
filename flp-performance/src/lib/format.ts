@@ -9,15 +9,6 @@ export function formatChf(cents: number): string {
   return chfFmt.format(cents / 100);
 }
 
-/** Montag der Woche (ISO) als YYYY-MM-DD, in Lokalzeit. */
-export function weekStart(date = new Date()): string {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = (d.getDay() + 6) % 7;
-  d.setDate(d.getDate() - day);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
 export function ageFromBirthYear(birthYear: number, now = new Date()): number {
   return now.getFullYear() - birthYear;
 }

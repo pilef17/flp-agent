@@ -107,3 +107,63 @@ export function keepValues(formData: FormData, keys: string[]): Record<string, s
   // _n erzwingt ein Neu-Rendern des Formulars (React setzt Formulare nach Actions zurück)
   return { ...Object.fromEntries(keys.map((k) => [k, formData.get(k)?.toString() ?? ""])), _n: crypto.randomUUID() };
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2: Übungen und Trainingspläne
+// ---------------------------------------------------------------------------
+const optionalInt = (min: number, max: number, label: string) =>
+  z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    z.coerce
+      .number({ error: `${label}: bitte eine Zahl eingeben.` })
+      .int(`${label}: bitte eine ganze Zahl eingeben.`)
+      .min(min, `${label}: mindestens ${min}.`)
+      .max(max, `${label}: höchstens ${max}.`)
+      .nullable(),
+  );
+
+const dosageFields = {
+  sets: optionalInt(1, 50, "Serien"),
+  repetitions: optionalInt(1, 500, "Wiederholungen"),
+  durationSeconds: optionalInt(1, 7200, "Dauer"),
+  restSeconds: optionalInt(0, 3600, "Pause"),
+};
+
+export const exerciseSchema = z
+  .object({
+    title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+    category: z.enum(
+      ["technik", "ballkontrolle", "dribbling", "koordination", "schnelligkeit", "kraft", "stabilitaet", "beweglichkeit", "wahrnehmung", "entscheidungsfaehigkeit"],
+      { error: "Bitte eine Kategorie wählen." },
+    ),
+    description: z.string().trim().max(4000).optional().default(""),
+    ageMin: z.coerce.number().int().min(4, "Alter: mindestens 4.").max(18),
+    ageMax: z.coerce.number().int().min(4).max(18, "Alter: höchstens 18."),
+    difficulty: z.coerce.number().int().min(1).max(5),
+    ...dosageFields,
+    coachingInstructions: z.string().trim().max(4000).optional().default(""),
+    safetyNotes: z.string().trim().max(2000).optional().default(""),
+  })
+  .refine((v) => v.ageMin <= v.ageMax, { path: ["ageMax"], message: "Das Höchstalter muss über dem Mindestalter liegen." });
+
+export const planSchema = z.object({
+  playerId: z.guid(),
+  title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+  weekDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte ein Datum wählen."),
+  notes: z.string().trim().max(2000).optional().default(""),
+});
+
+export const sessionSchema = z.object({
+  planId: z.guid(),
+  title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+  scheduledOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte einen Tag wählen."),
+  notes: z.string().trim().max(2000).optional().default(""),
+});
+
+export const sessionExerciseSchema = z.object({
+  planId: z.guid(),
+  sessionId: z.guid(),
+  exerciseId: z.guid({ error: "Bitte eine Übung wählen." }),
+  ...dosageFields,
+  notes: z.string().trim().max(1000).optional().default(""),
+});

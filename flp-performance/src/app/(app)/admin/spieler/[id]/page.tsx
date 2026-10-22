@@ -9,6 +9,8 @@ import { PageHeader, EmptyState, Badge, Alert } from "@/components/ui/Feedback";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { InviteGuardianForm } from "../Forms";
 import { revokeGuardian, setCoachingAccess } from "../actions";
+import { NewPlanSection } from "../../plaene/Forms";
+import { addDays, mondayOf, todayInSwitzerland, weekLabel } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Spielerprofil" };
 
@@ -33,6 +35,14 @@ export default async function PlayerAdminPage({
     .eq("id", id)
     .maybeSingle();
   if (!player) notFound();
+
+  const { data: plans } = await supabase
+    .from("training_plans")
+    .select("id, title, week_start, status, training_sessions(id)")
+    .eq("player_id", id)
+    .order("week_start", { ascending: false })
+    .limit(20);
+  const nextMonday = addDays(mondayOf(todayInSwitzerland()), 7);
 
   type GuardianLink = { id: string; relationship: string; status: string; profiles: { full_name: string; email: string | null } | null };
   const guardians = ((player.guardian_player_links ?? []) as unknown as GuardianLink[]).filter((g) => g.status === "active");
@@ -97,6 +107,30 @@ export default async function PlayerAdminPage({
         </Card>
 
         <div className="space-y-6">
+          <Card>
+            <CardTitle eyebrow="Training" title="Trainingspläne" />
+            {(plans ?? []).length === 0 ? (
+              <p className="mb-5 text-sm text-mute">Noch keine Pläne erstellt.</p>
+            ) : (
+              <ul className="mb-6 divide-y divide-line">
+                {plans!.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/admin/plaene/${p.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-gold">
+                      <span>
+                        <span className="font-medium">{p.title}</span>
+                        <span className="block text-xs text-mute">
+                          {weekLabel(p.week_start)} · {p.training_sessions?.length ?? 0} Einheiten
+                        </span>
+                      </span>
+                      {p.status === "published" ? <Badge tone="ok">Veröffentlicht</Badge> : <Badge>Entwurf</Badge>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <NewPlanSection playerId={player.id} defaultDate={nextMonday} startOpen={(plans ?? []).length === 0} />
+          </Card>
+
           <Card>
             <CardTitle eyebrow="Einwilligungen" title="Stand der Eltern-Erklärungen" />
             <ul className="space-y-3 text-sm">

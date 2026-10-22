@@ -1,6 +1,15 @@
 export type Role = "admin" | "coach" | "parent" | "player";
 
-const PROTECTED_PREFIXES = ["/startseite", "/elternbereich", "/konto", "/admin", "/passwort-neu"];
+const PROTECTED_PREFIXES = [
+  "/startseite",
+  "/elternbereich",
+  "/spieler",
+  "/trainingsplan",
+  "/uebungen",
+  "/konto",
+  "/admin",
+  "/passwort-neu",
+];
 
 export function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -39,6 +48,7 @@ export function navFor(roles: readonly Role[]): NavItem[] {
     const items: NavItem[] = [
       { href: "/admin", label: "Übersicht" },
       { href: "/admin/spieler", label: "Spieler" },
+      { href: "/admin/uebungen", label: "Übungen" },
     ];
     if (roles.includes("admin")) items.push({ href: "/admin/datenschutz", label: "Datenschutz" });
     items.push({ href: "/konto", label: "Konto" });
@@ -46,12 +56,16 @@ export function navFor(roles: readonly Role[]): NavItem[] {
   }
   if (roles.includes("parent")) {
     return [
-      { href: "/elternbereich", label: "Elternbereich" },
-      { href: "/konto", label: "Konto & Datenschutz" },
+      { href: "/elternbereich", label: "Übersicht" },
+      { href: "/trainingsplan", label: "Trainingsplan" },
+      { href: "/uebungen", label: "Übungen" },
+      { href: "/konto", label: "Konto" },
     ];
   }
   return [
     { href: "/startseite", label: "Startseite" },
+    { href: "/trainingsplan", label: "Trainingsplan" },
+    { href: "/uebungen", label: "Übungen" },
     { href: "/konto", label: "Konto" },
   ];
 }

@@ -105,11 +105,11 @@ insert into public.exercises (id, code, title, category, status) values
   ('20000000-0000-0000-0000-000000000002', 'TEC-002', 'Entwurfsübung', 'technik', 'draft'),
   ('20000000-0000-0000-0000-000000000003', 'KOO-001', 'Koordinationsleiter', 'koordination', 'published');
 insert into public.exercise_media (exercise_id, storage_path) values
-  ('20000000-0000-0000-0000-000000000001', 'tec-001/video.mp4'),
-  ('20000000-0000-0000-0000-000000000002', 'tec-002/video.mp4');
+  ('20000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001/video.mp4'),
+  ('20000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002/video.mp4');
 select tests.logout();
 insert into storage.objects (bucket_id, name) values
-  ('exercise-media', 'tec-001/video.mp4'), ('exercise-media', 'tec-002/video.mp4');
+  ('exercise-media', '20000000-0000-0000-0000-000000000001/video.mp4'), ('exercise-media', '20000000-0000-0000-0000-000000000002/video.mp4');
 
 -- Coach: Pläne, Beurteilungen, Feedback für Spieler 1
 select tests.login('00000000-0000-0000-0000-00000000000c');
@@ -151,6 +151,17 @@ select tests.allowed($$update public.assessment_scores set score = 4 where asses
   and category_id = (select id from public.assessment_categories where position = 1)$$,
   'Entwurf kann bearbeitet werden');
 
+select tests.denied($$insert into public.training_sessions (plan_id, scheduled_on, title)
+  values ('30000000-0000-0000-0000-000000000001', '2026-10-26', 'Ausserhalb')$$,
+  'Einheit ausserhalb der Planwoche abgelehnt');
+select tests.denied($$insert into public.training_plans (player_id, title, week_start)
+  values ('10000000-0000-0000-0000-000000000001', 'Doppelt', '2026-10-19')$$,
+  'Nur ein Plan pro Spieler und Woche');
+select tests.denied($$update public.training_plans set week_start = '2026-11-02' where id = '30000000-0000-0000-0000-000000000001'$$,
+  'Woche eines Plans mit Einheiten unveränderlich');
+select tests.denied($$insert into public.exercise_media (exercise_id, storage_path)
+  values ('20000000-0000-0000-0000-000000000001', 'fremder-ordner/x.mp4')$$,
+  'Medienpfad muss im Ordner der Übung liegen');
 select tests.eq((select count(*) from public.players), 1, 'Coach sieht nur zugewiesene Spieler');
 select tests.denied($$update public.players set club = 'X' where id = '10000000-0000-0000-0000-000000000002'$$,
   'Coach kann fremde Spieler nicht ändern');
