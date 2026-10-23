@@ -1,5 +1,14 @@
 # Status
 
+## Phase 5 – Qualität & Sicherheit (umgesetzt)
+
+- Sicherheitsreview: siehe `SICHERHEITSREVIEW.md` (2 neue Befunde behoben: Profil-Sichtbarkeit für Coaches, Content-Security-Policy).
+- E2E-Suiten im Repository (`e2e/`), inkl. reproduzierbarem Test-Stack ohne Docker (Versionen gepinnt, SHA-256 geprüft).
+- Neue Suite «Barrierefreiheit & Mobile»: alle Seiten je Rolle auf 390 px und 1366 px, axe-core WCAG 2.1 AA.
+- Alle Suiten schlagen bei CSP-Verletzungen fehl.
+- GitHub Actions: Checks, RLS-Tests (PostgreSQL 16), E2E bei jedem Push.
+- Go-Live-Checkliste: `CHECKLIST-LANCAMENTO.md`.
+
 ## Phase 4 – Shop (umgesetzt)
 
 | Bereich | Wie getestet |

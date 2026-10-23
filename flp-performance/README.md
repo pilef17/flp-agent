@@ -48,13 +48,18 @@ Ersten Administrator festlegen: in der App registrieren, E-Mail bestätigen und 
 ```bash
 npm run typecheck
 npm run lint
-npm test                        # Unit-Tests (Validierung, Routing, Beurteilungslogik)
+npm test                        # Unit-Tests (Validierung, Routing, Beurteilungslogik, Webhook)
 npm run test:db                 # RLS-/Policy-Tests gegen lokales PostgreSQL (psql nötig)
+npm run test:e2e                # End-to-End inkl. Barrierefreiheit (siehe e2e/README.md)
 ```
+
+Alle Prüfungen laufen bei jedem Push automatisch in GitHub Actions
+(`.github/workflows/flp-performance.yml`): Typecheck/Lint/Unit/Build, RLS-Tests auf PostgreSQL 16
+und alle E2E-Suiten.
 
 `npm run test:db` erstellt eine Wegwerf-Datenbank `flp_rls_test`, bildet die Supabase-Objekte `auth`/`storage`
 minimal nach (`supabase/tests/supabase_stub.sql`), wendet alle Migrationen an und führt
-`supabase/tests/rls_test.sql` aus (aktuell 107 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
+`supabase/tests/rls_test.sql` aus (aktuell 109 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
 
 ## Struktur
 
@@ -92,4 +97,5 @@ flp-performance/
 ```
 
 Weitere Dokumentation: [`docs/ARCHITEKTUR.md`](docs/ARCHITEKTUR.md), [`docs/SICHERHEIT-DATENSCHUTZ.md`](docs/SICHERHEIT-DATENSCHUTZ.md),
-[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/STATUS.md`](docs/STATUS.md).
+[`docs/SICHERHEITSREVIEW.md`](docs/SICHERHEITSREVIEW.md), [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/STATUS.md`](docs/STATUS.md),
+[`docs/CHECKLIST-LANCAMENTO.md`](docs/CHECKLIST-LANCAMENTO.md) (Go-Live-Checkliste, Portugiesisch), [`e2e/README.md`](e2e/README.md).

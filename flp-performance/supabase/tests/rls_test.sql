@@ -179,6 +179,8 @@ select tests.denied($$insert into public.assessments (player_id, coach_id) value
   ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000c')$$,
   'Coach kann fremde Spieler nicht beurteilen');
 select tests.eq((select count(*) from public.audit_logs), 0, 'Coach sieht keine Audit-Logs');
+select tests.eq((select count(*) from public.profiles), 3, 'Coach sieht nur eigenes Profil, Eltern und Spieler-Login seiner Spieler');
+select tests.eq((select count(*) from public.profiles where email = 'eltern-b@test.invalid'), 0, 'Coach sieht fremde Eltern nicht');
 select tests.logout();
 
 -- Eltern A (Spieler 1)
