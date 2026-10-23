@@ -1,0 +1,106 @@
+name: FLP Performance
+
+on:
+  push:
+    paths: ["flp-performance/**", ".github/workflows/flp-performance.yml"]
+  pull_request:
+    paths: ["flp-performance/**", ".github/workflows/flp-performance.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flp-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: flp-performance
+
+jobs:
+  checks:
+    name: Typecheck, Lint, Unit-Tests, Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: flp-performance/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Build (Platzhalter-Umgebung, keine echten Schlüssel)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+
+  database:
+    name: RLS- und Datenbanktests
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash supabase/tests/run-local.sh
+
+  e2e:
+    name: End-to-End (Auth, Coaching, Entwicklung, Shop, Barrierefreiheit)
+    runs-on: ubuntu-24.04
+    needs: [checks, database]
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      E2E_PG_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: flp-performance/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install aiosmtpd==1.4.6
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Test-Stack starten (erzeugt e2e/.run/e2e.env)
+        run: bash e2e/stack/up.sh
+      - name: App mit Test-Konfiguration bauen und starten
+        run: |
+          set -a; source e2e/.run/e2e.env; set +a
+          npm run build
+          nohup npx next start -p 3100 > e2e/.run/logs/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://localhost:3100/login >/dev/null && break; sleep 1; done
+      - run: node e2e/run.mjs
+      - name: Screenshots und Logs bei Fehlern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artefakte
+          path: |
+            flp-performance/e2e/.run/logs
+            flp-performance/e2e/.run/screenshots
+          retention-days: 7
