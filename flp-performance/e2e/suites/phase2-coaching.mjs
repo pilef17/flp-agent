@@ -101,7 +101,7 @@ const suite = () =>
 
     // Doppelter Plan in derselben Woche
     await admin.goto(playerUrl);
-    await admin.locator("summary:has-text('Neuen Wochenplan')").click();
+    await admin.getByRole("button", { name: "+ Neuen Wochenplan erstellen" }).click();
     await admin.fill("#f-title", "Doppelt");
     await admin.fill("#f-weekDate", monday);
     await admin.click("text=Plan erstellen");
@@ -112,7 +112,7 @@ const suite = () =>
     await parent.goto(`${BASE}/trainingsplan`);
     check(await seen(parent.getByRole("heading", { name: "Woche Technik" })), "Kalender zeigt veröffentlichten Plan");
     check(await seen(parent.getByText("· Heute")), "Heutiger Tag markiert");
-    check(await seen(parent.getByText("Kein Training – Erholung")), "Tage ohne Training");
+    check(await seen(parent.getByText("Kein Training", { exact: true })), "Tage ohne Training");
     const items = parent.locator("li:has(a[href^='/uebungen/'])");
     check((await items.nth(0).textContent()).includes("Koordinationsleiter"), "Reihenfolge beim Elternteil übernommen");
     check(await seen(parent.getByText("4 × 10 · Pause 30 Sek.")), "Dosierung sichtbar");

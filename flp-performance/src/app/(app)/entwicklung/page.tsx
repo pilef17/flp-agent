@@ -84,7 +84,7 @@ export default async function DevelopmentPage({ searchParams }: { searchParams: 
 
           <Card>
             <CardTitle eyebrow="Tabelle" title="Alle Beurteilungen" />
-            <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
+            <div tabIndex={0} role="region" aria-label="Tabelle aller Beurteilungen (horizontal scrollbar)" className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
               <table className="w-full text-sm">
                 <caption className="sr-only">Werte aller veröffentlichten Beurteilungen, neueste zuerst</caption>
                 <thead>

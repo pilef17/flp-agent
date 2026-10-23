@@ -125,7 +125,8 @@ const suite = () =>
     // 7. Zugriffsschutz
     await parent.goto(draftUrl);
     check(await parent.waitForURL("**/elternbereich", { timeout: 15000 }).then(() => true).catch(() => false), "Eltern: Beurteilungs-Editor nicht erreichbar");
-    const leak = sql(`set role authenticated; select set_config('request.jwt.claims', json_build_object('sub', (select id from auth.users where email='eltern@flp.test'))::text, false); select count(*) from public.assessments;`).split("\n").at(-1);
+    const parentUid = sql(`select id from auth.users where email='eltern@flp.test'`);
+    const leak = sql(`set role authenticated; select set_config('request.jwt.claims', '{"sub":"${parentUid}"}', false); select count(*) from public.assessments;`).split("\n").at(-1);
     check(leak === "2", `RLS: Eltern sehen nur die 2 veröffentlichten Beurteilungen (${leak})`);
     const other = await ctx();
     await register(other, "Beat Fremd", "fremd@flp.test");
@@ -141,6 +142,21 @@ const suite = () =>
     check(sql(`select count(*) from public.assessments where player_id='${playerId}'`) === "2", "Entwurf verworfen, veröffentlichte bleiben");
     await admin.goto(initialUrl);
     check(await seen(admin.getByText("Schwacher Fuss noch unsicher")), "Veröffentlichte Erstbeurteilung unverändert lesbar");
+
+    // 9. Coach (ohne Admin-Rolle) erfasst Spieler und beurteilt ihn
+    const coach = await ctx();
+    await register(coach, "Trainer Zwei", "coach@flp.test");
+    sql(`update public.user_roles set role='coach' where user_id=(select id from auth.users where email='coach@flp.test');`);
+    await coach.goto(`${BASE}/admin/spieler`);
+    check(await seen(coach.getByText("Noch keine Spieler")), "Coach sieht fremde Spieler nicht");
+    await coach.fill("#f-firstName", "Mia"); await coach.fill("#f-lastName", "Coachkind"); await coach.fill("#f-birthYear", "2016");
+    await coach.click("form >> text=Spieler erfassen");
+    check(await coach.waitForURL(/\/admin\/spieler\/[0-9a-f-]{36}/, { timeout: 15000 }).then(() => true).catch(() => false), "Coach kann Spieler erfassen (Regression)");
+    await coach.fill("#f-assessedOn", "2026-09-10");
+    await coach.click("text=Beurteilung beginnen");
+    check(await coach.waitForURL(/\/admin\/beurteilungen\/[0-9a-f-]{36}/, { timeout: 15000 }).then(() => true).catch(() => false), "Coach kann Beurteilung anlegen");
+    await coach.goto(playerUrl);
+    check(await seen(coach.getByText("Seite nicht gefunden")), "Coach sieht nicht zugewiesenen Spieler nicht");
   });
 
 export default suite;
