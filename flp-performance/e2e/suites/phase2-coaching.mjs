@@ -121,7 +121,7 @@ const suite = () =>
     check(await seen(parent.getByRole("button", { name: "Übung als offen markieren" })), "Übung im Kalender erledigt");
     await parent.getByRole("button", { name: "Einheit als erledigt markieren" }).click();
     check(await seen(parent.getByText("1 von 1 Einheiten erledigt")), "Wochenfortschritt");
-    await parent.click("[aria-label='Nächste Woche']");
+    await parent.getByRole("link", { name: "Nächste Woche" }).click();
     check(await seen(parent.getByText("Kein Plan für diese Woche")), "Nächste Woche ohne Plan");
     check(await seen(parent.getByText("Zur aktuellen Woche")), "Link zur aktuellen Woche");
     await parent.goto(`${BASE}/trainingsplan?woche=kaputt`);

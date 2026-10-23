@@ -47,8 +47,8 @@ export default async function TrainingCalendar({ searchParams }: { searchParams:
       <PlayerSwitcher players={players} activeId={player.id} href={(id) => href(monday, id)} />
 
       <div className="-mt-4 mb-6 flex items-center justify-between gap-3 border-b border-line pb-3">
-        <Link href={href(addDays(monday, -7))} className="min-h-11 content-center px-2 text-sm text-mute hover:text-paper" aria-label="Vorherige Woche">
-          ← <span className="hidden sm:inline">Vorherige</span>
+        <Link href={href(addDays(monday, -7))} className="min-h-11 content-center px-2 text-sm text-mute hover:text-paper">
+          <span aria-hidden>←</span> <span className="sr-only sm:not-sr-only">Vorherige Woche</span>
         </Link>
         <div className="text-center">
           <p className="text-sm font-semibold">{weekLabel(monday)}</p>
@@ -60,8 +60,8 @@ export default async function TrainingCalendar({ searchParams }: { searchParams:
             sessions.length > 0 && <p className="text-xs text-mute">{done} von {sessions.length} Einheiten erledigt</p>
           )}
         </div>
-        <Link href={href(addDays(monday, 7))} className="min-h-11 content-center px-2 text-sm text-mute hover:text-paper" aria-label="Nächste Woche">
-          <span className="hidden sm:inline">Nächste</span> →
+        <Link href={href(addDays(monday, 7))} className="min-h-11 content-center px-2 text-sm text-mute hover:text-paper">
+          <span className="sr-only sm:not-sr-only">Nächste Woche</span> <span aria-hidden>→</span>
         </Link>
       </div>
 

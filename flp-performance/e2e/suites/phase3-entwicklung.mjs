@@ -120,7 +120,7 @@ const suite = () =>
     await parent.goto(`${BASE}/elternbereich`);
     check(await seen(parent.getByRole("link", { name: "Verlauf →" })) && await seen(parent.getByRole("link", { name: "Alle →" })), "Übersicht verlinkt Entwicklung & Feedback");
     const navItems = await parent.locator("nav[aria-label='Mobile Navigation'] a").allTextContents();
-    check(navItems.join("|") === "Start|Plan|Übungen|Entwicklung|Konto", `Mobile Navigation Eltern (${navItems.join("|")})`);
+    check(navItems.join("|") === "Start|Plan|Übungen|Entwicklung|Programme", `Mobile Navigation Eltern (${navItems.join("|")})`);
 
     // 7. Zugriffsschutz
     await parent.goto(draftUrl);

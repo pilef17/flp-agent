@@ -35,10 +35,10 @@ export default async function AccountPage() {
           <p className="mb-5 text-sm text-mute">E-Mail: {viewer.email}</p>
           <ProfileForm fullName={profile?.full_name ?? ""} phone={profile?.phone ?? ""} />
           <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <Link href="/passwort-neu" className="text-gold underline-offset-4 hover:underline">
+            <Link href="/passwort-neu" className="text-gold underline underline-offset-4 hover:text-paper">
               Passwort ändern
             </Link>
-            <Link href="/meine-kaeufe" className="text-gold underline-offset-4 hover:underline">
+            <Link href="/meine-kaeufe" className="text-gold underline underline-offset-4 hover:text-paper">
               Meine Käufe
             </Link>
           </p>

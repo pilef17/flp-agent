@@ -95,7 +95,7 @@ export default async function DevelopmentPage({ searchParams }: { searchParams: 
                     {newestFirst.map((a) => (
                       <th key={a.id} scope="col" className="px-2 py-2 text-right font-medium">
                         {formatDate(a.assessed_on)}
-                        {a.kind === "initial" && <span className="block normal-case tracking-normal text-initial">Erst</span>}
+                        {a.kind === "initial" && <span className="block normal-case tracking-normal text-danger">Erst</span>}
                       </th>
                     ))}
                   </tr>

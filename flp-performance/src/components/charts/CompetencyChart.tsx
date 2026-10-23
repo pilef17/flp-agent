@@ -36,12 +36,17 @@ export function CompetencyChart({
           return (
             <div key={name} className="grid grid-cols-[minmax(0,9.5rem)_1fr_auto] items-center gap-3 sm:grid-cols-[13rem_1fr_auto]">
               <dt className="truncate text-sm">{name}</dt>
-              <dd className="space-y-1" aria-label={`${name}: Erstbeurteilung ${a ?? "nicht beurteilt"}, aktuell ${b ?? "nicht beurteilt"}`}>
+              <dd className="space-y-1">
+                <span className="sr-only">
+                  {initial && `Erstbeurteilung ${a ?? "nicht beurteilt"}`}
+                  {initial && current && ", "}
+                  {current && `aktuell ${b ?? "nicht beurteilt"}`}
+                </span>
                 {initial && <Bar value={a} className="bg-initial" />}
                 {current && <Bar value={b} className="bg-gold" />}
               </dd>
-              <dd className="w-14 text-right text-xs tabular-nums text-mute">
-                {initial && <span className="text-initial">{a ?? "n. b."}</span>}
+              <dd aria-hidden className="w-14 text-right text-xs tabular-nums text-mute">
+                {initial && <span className="text-danger">{a ?? "n. b."}</span>}
                 {initial && current && " → "}
                 {current && <span className="text-gold">{b ?? "n. b."}</span>}
               </dd>
@@ -55,7 +60,7 @@ export function CompetencyChart({
 
 function Bar({ value, className }: { value: number | null; className: string }) {
   return (
-    <div className="h-1.5 w-full rounded-full bg-ink">
+    <div aria-hidden className="h-1.5 w-full rounded-full bg-ink">
       {value !== null && <div className={`h-full rounded-full ${className}`} style={{ width: `${(value / 5) * 100}%` }} />}
     </div>
   );

@@ -57,7 +57,8 @@ function CompletionButton({
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="sessionExerciseId" value={sessionExerciseId} />
       <input type="hidden" name="done" value={done ? "false" : "true"} />
-      <button type="submit" className="min-h-11 px-1" aria-label={done ? `${label} als offen markieren` : `${label} als erledigt markieren`}>
+      <button type="submit" className="min-h-11 px-1">
+        <span className="sr-only">{done ? `${label} als offen markieren – ` : `${label} als erledigt markieren – `}</span>
         {done ? <Badge tone="ok">Erledigt ✓</Badge> : <Badge>Offen</Badge>}
       </button>
     </form>

@@ -13,13 +13,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <LoginForm next={next ?? ""} linkError={fehler === "link"} />
       <div className="mt-8 space-y-2 text-sm text-mute">
         <p>
-          <Link href="/passwort-vergessen" className="text-paper underline-offset-4 hover:underline">
+          <Link href="/passwort-vergessen" className="text-paper underline underline-offset-4 hover:text-paper">
             Passwort vergessen?
           </Link>
         </p>
         <p>
           Noch kein Konto?{" "}
-          <Link href="/registrieren" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/registrieren" className="text-gold underline underline-offset-4 hover:text-paper">
             Jetzt registrieren
           </Link>
         </p>

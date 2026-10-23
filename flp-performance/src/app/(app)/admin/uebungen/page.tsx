@@ -32,7 +32,7 @@ export default async function AdminExercises({ searchParams }: { searchParams: P
     <>
       <PageHeader eyebrow="Verwaltung" title="Übungen" text="Übungen erstellen, Videos hochladen und für Spieler freigeben." />
       <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+        <div className="min-w-0 lg:col-span-3">
           <form role="search" className="mb-4">
             {category && <input type="hidden" name="kategorie" value={category} />}
             <label htmlFor="q" className="sr-only">
