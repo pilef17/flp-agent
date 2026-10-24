@@ -4,30 +4,34 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 ✅ = já feito no código · ⬜ = precisa ser feito por você (ou com ajuda)
 
 ## 1. Infraestrutura
-- ⬜ Criar projeto **Supabase** (região Zurich ou Frankfurt) e aplicar as migrações: `npx supabase link` + `npx supabase db push`
-- ⬜ Supabase → Authentication → URL Configuration: Site URL e Redirect URLs (`/auth/confirm`, `/auth/einladung`)
+- ✅ Criar projeto **Supabase** e aplicar as migrações (feito pelo SQL Editor, 24.10.2026)
+- ✅ Supabase → Authentication → URL Configuration: Site URL e Redirect URL `https://flp-performance.vercel.app/**`
 - ⬜ Supabase → SMTP próprio (ex.: e-mail do domínio da FLP) com SPF/DKIM
 - ⬜ Traduzir os modelos de e-mail do Supabase para alemão suíço
 - ⬜ Ativar *Leaked Password Protection* e conferir os limites de requisições
 - ⬜ Ativar backups / Point-in-Time-Recovery no plano do Supabase
-- ⬜ Criar projeto **Vercel** com Root Directory = `flp-performance` e variáveis de `.env.example`
+- ⬜ **Supabase Pro** antes do lançamento (o plano grátis pausa o projeto após 7 dias sem uso e limita uploads a 50 MB por arquivo)
+- ✅ Criar projeto **Vercel** com Root Directory = `flp-performance` e variáveis de `.env.example`
+- ⬜ **Vercel Pro** antes de vender: o plano Hobby (grátis) é só para uso não comercial
 - ⬜ Domínio próprio (ex.: app.flp-performance.ch) com HTTPS
-- ⬜ Rodar `grant-admin.sql` com o seu e-mail para virar administrador
+- ✅ Rodar `grant-admin.sql` com o seu e-mail para virar administrador
 
 ## 2. Stripe
-- ⬜ Conta Stripe em **modo de teste**, chave `sk_test_…` na Vercel
-- ⬜ Webhook `https://<domínio>/api/stripe/webhook` com os 5 eventos (ver `DEPLOYMENT.md`)
-- ⬜ Ativar cartão e **TWINT**; ativar recibos por e-mail
-- ⬜ Compra de teste com cartão `4242 4242 4242 4242` → acesso liberado
-- ⬜ Estorno de teste no Stripe → acesso removido automaticamente
+- ✅ Conta Stripe em **modo de teste** (Sandbox), chave `sk_test_…` na Vercel
+- ✅ Webhook `https://flp-performance.vercel.app/api/stripe/webhook` com os 5 eventos, estilo *Snapshot*
+- ✅ **TWINT** ativado e testado (Sandbox); formas de pagamento: TWINT, cartão, Apple Pay, Google Pay
+- ⬜ Ativar recibos por e-mail (Stripe → Configurações → E-mails para clientes)
+- ⬜ No lançamento: conferir de novo as formas de pagamento na conta **de produção** (as configurações do Sandbox não são copiadas automaticamente)
+- ✅ Compra de teste com cartão `4242 4242 4242 4242` → acesso liberado
+- ✅ Estorno de teste no Stripe → acesso removido automaticamente
 - ⬜ Só depois: trocar para as chaves **live**
 
 ## 3. Testes no ambiente real (eu faço com você)
-- ⬜ Cadastro + e-mail de confirmação
+- ✅ Cadastro + e-mail de confirmação
 - ⬜ Convite de pai/mãe + definição de senha
-- ⬜ Upload de vídeo de exercício e reprodução no celular (iPhone e Android)
+- ✅ Upload de vídeo de exercício no iPhone (⬜ testar também no Android)
 - ⬜ Upload de capa e vídeo de programa
-- ⬜ Compra de teste e estorno (acima)
+- ✅ Compra de teste e estorno (acima)
 - ⬜ Instalar como app (PWA) no celular
 
 ## 4. Jurídico e proteção de dados (revisão por especialista)
