@@ -19,7 +19,9 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 ## 2. Stripe
 - ✅ Conta Stripe em **modo de teste** (Sandbox), chave `sk_test_…` na Vercel
 - ✅ Webhook `https://flp-performance.vercel.app/api/stripe/webhook` com os 5 eventos, estilo *Snapshot*
-- ⬜ Ativar **TWINT** (cartão já ativo); desativar Klarna/Amazon Pay se não quiser oferecer; ativar recibos por e-mail
+- ✅ **TWINT** ativado e testado (Sandbox); formas de pagamento: TWINT, cartão, Apple Pay, Google Pay
+- ⬜ Ativar recibos por e-mail (Stripe → Configurações → E-mails para clientes)
+- ⬜ No lançamento: conferir de novo as formas de pagamento na conta **de produção** (as configurações do Sandbox não são copiadas automaticamente)
 - ✅ Compra de teste com cartão `4242 4242 4242 4242` → acesso liberado
 - ✅ Estorno de teste no Stripe → acesso removido automaticamente
 - ⬜ Só depois: trocar para as chaves **live**
