@@ -43,7 +43,7 @@ export default async function AdminExercises({ searchParams }: { searchParams: P
           <CategoryFilter basePath="/admin/uebungen" active={category} q={term} />
           <div className="mt-5">
             {exercises.length === 0 ? (
-              <EmptyState title={term || category ? "Keine Treffer" : "Noch keine Übungen"} text="Erstelle rechts die erste Übung." />
+              <EmptyState title={term || category ? "Keine Treffer" : "Noch keine Übungen"} text="Erstelle die erste Übung im Formular «Übung erstellen»." />
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2">
                 {exercises.map((e) => (

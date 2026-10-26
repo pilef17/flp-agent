@@ -40,7 +40,7 @@ export default async function PlayersPage({ searchParams }: { searchParams: Prom
           {(players ?? []).length === 0 ? (
             <EmptyState
               title={term ? "Keine Treffer" : "Noch keine Spieler"}
-              text={term ? `Kein Spieler entspricht «${term}».` : "Erfasse rechts den ersten Spieler."}
+              text={term ? `Kein Spieler entspricht «${term}».` : "Erfasse den ersten Spieler im Formular «Spieler erfassen»."}
             />
           ) : (
             <ul className="divide-y divide-line">
