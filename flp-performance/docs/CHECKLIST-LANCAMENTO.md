@@ -1,13 +1,13 @@
 # Checklist de lançamento – FLP Performance
 
 Lista do que precisa estar feito **antes de abrir para clientes reais**.
-✅ = já feito no código · ⬜ = precisa ser feito por você (ou com ajuda)
+✅ = feito · 🟡 = feito, falta revisão/ação sua · ⬜ = precisa ser feito por você (ou com ajuda)
 
 ## 1. Infraestrutura
 - ✅ Criar projeto **Supabase** e aplicar as migrações (feito pelo SQL Editor, 24.10.2026)
 - ✅ Supabase → Authentication → URL Configuration: Site URL e Redirect URL `https://flp-performance.vercel.app/**`
-- ⬜ Supabase → SMTP próprio (ex.: e-mail do domínio da FLP) com SPF/DKIM
-- ⬜ Traduzir os modelos de e-mail do Supabase para alemão suíço
+- ✅ Supabase → SMTP próprio `info@flp-performance.ch` (Infomaniak), testado
+- 🟡 Traduzir os modelos de e-mail do Supabase para alemão suíço (prontos em `supabase/email-templates/`, colar no Supabase pelo computador)
 - ⬜ Ativar *Leaked Password Protection* e conferir os limites de requisições
 - ⬜ Ativar backups / Point-in-Time-Recovery no plano do Supabase
 - ⬜ **Supabase Pro** antes do lançamento (o plano grátis pausa o projeto após 7 dias sem uso e limita uploads a 50 MB por arquivo)
@@ -35,15 +35,16 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 - ⬜ Instalar como app (PWA) no celular
 
 ## 4. Jurídico e proteção de dados (revisão por especialista)
-- ⬜ **Política de privacidade** definitiva (hoje é rascunho em `/datenschutz`): responsável, endereço, contato, prestadores (Supabase, Vercel, Stripe, e-mail), regiões dos dados, transferências para os EUA
+- 🟡 **Política de privacidade** escrita em `/datenschutz` com os dados reais (falta revisão por especialista): responsável, endereço, contato, prestadores (Supabase, Vercel, Stripe, e-mail), regiões dos dados, transferências para os EUA
 - ⬜ Verificar se o **RGPD/DSGVO** se aplica (clientes na UE?) além da lei suíça (**revDSG**)
 - ⬜ Revisar os **textos de consentimento** dos pais (`src/lib/consent.ts`); ao mudar, aumentar `POLICY_VERSION`
 - ⬜ Contratos de processamento de dados (DPA) com Supabase, Vercel, Stripe e o provedor de e-mail
 - ⬜ Registro das atividades de tratamento e prazos de retenção (ex.: apagar dados X meses após o fim do coaching)
 - ⬜ Processo para pedidos de dados (prazo de 30 dias) e verificação de identidade de quem pede
 - ⬜ Processo para incidentes de dados (comunicação ao EDÖB)
-- ⬜ **Impressum** (nome, endereço, contato) na app e na loja
-- ⬜ **Termos de venda (AGB)** e política de reembolso dos programas digitais
+- 🟡 **Impressum** em `/impressum` (Felipe Oliveira, Bergwerkstrasse 28, 5027 Herznach) – links no rodapé de todas as páginas
+- 🟡 **AGB** em `/agb` (sem reembolso após liberação do conteúdo, exceto falha técnica) – link também no botão de compra; falta revisão
+- ⬜ **AHV:** verificar inscrição como autônomo na Ausgleichskasse do cantão de Aargau
 - ⬜ **IVA (MWST):** verificar obrigação (a partir de CHF 100 000/ano); hoje os preços aparecem sem menção a IVA
 - ⬜ Conteúdo de **nutrição** revisado por profissional (o aviso "não substitui orientação médica" já está na app)
 

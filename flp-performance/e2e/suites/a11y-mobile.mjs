@@ -47,7 +47,7 @@ const suite = () =>
     const productId = sql(`select id from public.products where slug='flp-training'`);
 
     const pages = {
-      anonym: ["/", "/login", "/registrieren", "/passwort-vergessen", "/programme", "/programme/flp-training", "/datenschutz"],
+      anonym: ["/", "/login", "/registrieren", "/passwort-vergessen", "/programme", "/programme/flp-training", "/datenschutz", "/impressum", "/agb"],
       eltern: ["/elternbereich", `/spieler/${playerId}`, "/trainingsplan", "/uebungen", "/uebungen/20000000-0000-4000-8000-000000000001", "/entwicklung", "/feedback", "/konto", "/meine-kaeufe", "/passwort-neu"],
       admin: ["/admin", "/admin/spieler", `/admin/spieler/${playerId}`, "/admin/uebungen", "/admin/uebungen/20000000-0000-4000-8000-000000000001", `/admin/plaene/${planId}`, "/admin/beurteilungen", `/admin/beurteilungen/${assessmentId}`, "/admin/produkte", `/admin/produkte/${productId}`, "/admin/bestellungen", "/admin/datenschutz"],
     };

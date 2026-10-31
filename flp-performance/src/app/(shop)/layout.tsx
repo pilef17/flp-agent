@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { AppShell } from "@/components/nav/AppShell";
 import { Logo } from "@/components/ui/Logo";
 import { ButtonLink } from "@/components/ui/Button";
@@ -18,6 +19,9 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-8 sm:px-8 sm:pt-12">{children}</main>
+      <footer className="border-t border-line">
+        <LegalLinks className="mx-auto max-w-6xl px-4 py-4 sm:px-8" />
+      </footer>
     </div>
   );
 }

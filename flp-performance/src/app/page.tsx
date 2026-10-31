@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { ButtonLink } from "@/components/ui/Button";
@@ -49,6 +50,7 @@ export default async function Home() {
           <p>Spieler, Pläne und Beurteilungen an einem Ort verwalten.</p>
         </div>
       </footer>
+      <LegalLinks className="mt-8" />
     </main>
   );
 }
