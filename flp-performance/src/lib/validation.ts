@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FOCUS_KEYS } from "./focus";
 
 const email = z.string().trim().toLowerCase().email("Bitte eine gültige E-Mail-Adresse eingeben.").max(254);
 const password = z
@@ -151,14 +152,88 @@ export const planSchema = z.object({
   title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
   weekDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte ein Datum wählen."),
   notes: z.string().trim().max(2000).optional().default(""),
+  // leer = leerer Plan, sonst Wochenvorlage
+  templateId: z.union([z.literal(""), z.guid()]).optional().default(""),
 });
 
-export const sessionSchema = z.object({
-  planId: z.guid(),
+const emptyToNull = (v: unknown) => (v === "" || v === undefined ? null : v);
+
+/** Optionale Uhrzeit "HH:MM" (leer = keine Angabe). */
+const optionalTime = z.preprocess(
+  emptyToNull,
+  z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Uhrzeit im Format HH:MM.")
+    .nullable(),
+);
+
+const optionalFocus = z.preprocess(emptyToNull, z.enum(FOCUS_KEYS, { error: "Bitte einen Fokus wählen." }).nullable());
+
+const timeOrder = <T extends { startsAt: string | null; endsAt: string | null }>(v: T) =>
+  !v.startsAt || !v.endsAt || v.endsAt > v.startsAt;
+const timeOrderError = { path: ["endsAt"], message: "Das Ende muss nach dem Beginn liegen." };
+
+export const sessionSchema = z
+  .object({
+    planId: z.guid(),
+    title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+    scheduledOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte einen Tag wählen."),
+    notes: z.string().trim().max(2000).optional().default(""),
+    focus: optionalFocus,
+    startsAt: optionalTime,
+    endsAt: optionalTime,
+  })
+  .refine(timeOrder, timeOrderError);
+
+export const sessionUpdateSchema = z
+  .object({
+    planId: z.guid(),
+    sessionId: z.guid(),
+    title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+    notes: z.string().trim().max(2000).optional().default(""),
+    focus: optionalFocus,
+    startsAt: optionalTime,
+    endsAt: optionalTime,
+  })
+  .refine(timeOrder, timeOrderError);
+
+export const weekTemplateSchema = z.object({
   title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
-  scheduledOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte einen Tag wählen."),
+  audience: z.string().trim().max(60).optional().default(""),
   notes: z.string().trim().max(2000).optional().default(""),
 });
+
+const templateDaySchema = z
+  .object({
+    title: z.string().trim().min(2, "Bitte einen Titel eingeben.").max(120),
+    focus: z.enum(FOCUS_KEYS, { error: "Bitte einen Fokus wählen." }),
+    startsAt: optionalTime,
+    endsAt: optionalTime,
+  })
+  .refine(timeOrder, timeOrderError);
+
+export type TemplateDay = z.infer<typeof templateDaySchema> & { weekday: number };
+
+/**
+ * Liest die sieben Wochentage eines Vorlagenformulars (Felder "active_1", "title_1" … "endsAt_7").
+ * Nicht aktivierte Tage sind Ruhetage. Fehler werden als "title_3" usw. zurückgegeben.
+ */
+export function parseTemplateDays(formData: FormData): { days: TemplateDay[]; errors: Record<string, string> } {
+  const days: TemplateDay[] = [];
+  const errors: Record<string, string> = {};
+  for (let weekday = 1; weekday <= 7; weekday++) {
+    if (formData.get(`active_${weekday}`) !== "on") continue;
+    const parsed = templateDaySchema.safeParse({
+      title: formData.get(`title_${weekday}`) ?? "",
+      focus: formData.get(`focus_${weekday}`) ?? "",
+      startsAt: formData.get(`startsAt_${weekday}`) ?? "",
+      endsAt: formData.get(`endsAt_${weekday}`) ?? "",
+    });
+    if (parsed.success) days.push({ ...parsed.data, weekday });
+    else for (const [k, v] of Object.entries(fieldErrors(parsed.error))) errors[`${k}_${weekday}`] = v;
+  }
+  return { days, errors };
+}
 
 export const sessionExerciseSchema = z.object({
   planId: z.guid(),

@@ -82,7 +82,11 @@ export default async function ProgramDetailPage({
             )}
             {!owned && (
               <p className="text-xs text-mute">
-                Sichere Zahlung über Stripe. Kartendaten werden nicht bei FLP Performance gespeichert. Zugang sofort nach bestätigter Zahlung.
+                Sichere Zahlung über Stripe. Kartendaten werden nicht bei FLP Performance gespeichert. Zugang sofort nach bestätigter Zahlung. Mit dem Kauf akzeptierst du die{" "}
+                <Link href="/agb" className="underline underline-offset-4 hover:text-paper">
+                  AGB
+                </Link>
+                .
               </p>
             )}
           </div>

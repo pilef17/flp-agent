@@ -341,6 +341,41 @@ select tests.eq((select count(*) from storage.objects where bucket_id = 'player-
   'Fremde Eltern sehen Spielervideos nicht');
 select tests.logout();
 
+-- Wochenvorlagen
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.week_templates), 2, 'Coach sieht die Startvorlagen');
+select tests.eq((select count(*) from public.week_template_days d join public.week_templates t on t.id = d.template_id
+  where t.title = 'Wochenstruktur Kids'), 6, 'Vorlage Kids hat 6 Trainingstage');
+select tests.ok((select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-09', 'Woche aus Vorlage') is not null), 'Coach erstellt Plan aus Vorlage');
+select tests.eq((select count(*) from public.training_sessions s join public.training_plans p on p.id = s.plan_id
+  where p.week_start = '2026-11-09' and p.player_id = '10000000-0000-0000-0000-000000000001' and s.focus is not null), 6,
+  'Plan aus Vorlage enthält 6 Einheiten mit Fokus');
+select tests.eq((select count(*) from public.training_plans where week_start = '2026-11-09' and status = 'draft'), 1,
+  'Plan aus Vorlage ist ein Entwurf');
+select tests.ok((select max(scheduled_on) = '2026-11-14' from public.training_sessions s join public.training_plans p on p.id = s.plan_id
+  where p.week_start = '2026-11-09'), 'Samstag der Vorlage landet auf dem Samstag der Planwoche');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-09', 'Doppelt')$$, 'Vorlage nicht zweimal in dieselbe Woche');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000002', '2026-11-09', 'Fremd')$$, 'Coach kann Vorlage nicht auf fremden Spieler anwenden');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-11', 'Mittwoch')$$, 'Planwoche muss am Montag beginnen');
+select tests.denied($$update public.training_sessions set starts_at = '12:00', ends_at = '11:00'
+  where id = '31000000-0000-0000-0000-000000000001'$$, 'Endzeit vor Startzeit abgelehnt');
+select tests.allowed($$insert into public.week_templates (title) values ('Eigene Vorlage')$$, 'Coach erstellt eigene Vorlage');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.week_templates), 0, 'Eltern sehen keine Vorlagen');
+select tests.denied($$insert into public.week_templates (title) values ('Eltern-Vorlage')$$, 'Eltern können keine Vorlage anlegen');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates limit 1),
+  '10000000-0000-0000-0000-000000000001', '2026-11-16', 'Eltern')$$, 'Eltern können keine Vorlage anwenden');
+select tests.eq((select count(*) from public.training_plans where week_start = '2026-11-09'), 0, 'Eltern sehen den Entwurf aus der Vorlage nicht');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select * from public.week_templates$$, 'Anonym: keine Vorlagen');
+select tests.logout();
+
 -- Datenlöschung: Admin löscht Spieler inkl. veröffentlichter Beurteilungen
 select tests.login('00000000-0000-0000-0000-00000000000a');
 select tests.allowed($$delete from public.players where id = '10000000-0000-0000-0000-000000000001'$$,

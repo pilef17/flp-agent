@@ -60,6 +60,7 @@ export function navFor(roles: readonly Role[]): NavItem[] {
     const items: NavItem[] = [
       { href: "/admin", label: "Übersicht", short: "Start" },
       { href: "/admin/spieler", label: "Spieler" },
+      { href: "/admin/vorlagen", label: "Vorlagen", desktopOnly: true },
       { href: "/admin/uebungen", label: "Übungen" },
       { href: "/admin/beurteilungen", label: "Beurteilungen", short: "Bewertung" },
     ];
