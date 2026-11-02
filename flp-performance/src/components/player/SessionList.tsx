@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Feedback";
 import { weekdayName, shortDate } from "@/lib/dates";
 import type { SessionView } from "@/lib/data/week-plan";
+import { FocusBadge, TimeLabel } from "@/components/training/Focus";
 import { toggleCompletion } from "./completion-actions";
 
 export function SessionBlock({ session, showDate = true }: { session: SessionView; showDate?: boolean }) {
@@ -15,6 +16,12 @@ export function SessionBlock({ session, showDate = true }: { session: SessionVie
             </p>
           )}
           <p className="font-semibold">{session.title}</p>
+          {(session.focus || session.startsAt) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-3">
+              <FocusBadge focus={session.focus} />
+              <TimeLabel start={session.startsAt} end={session.endsAt} />
+            </div>
+          )}
           {session.notes && <p className="mt-1 whitespace-pre-line text-sm text-mute">{session.notes}</p>}
         </div>
         <CompletionButton sessionId={session.id} done={session.completed} label="Einheit" />

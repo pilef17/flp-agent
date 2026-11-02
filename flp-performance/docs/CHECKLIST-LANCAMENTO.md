@@ -15,6 +15,7 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 - ⬜ **Vercel Pro** antes de vender: o plano Hobby (grátis) é só para uso não comercial
 - ⬜ Domínio próprio (ex.: app.flp-performance.ch) com HTTPS
 - ✅ Rodar `grant-admin.sql` com o seu e-mail para virar administrador
+- ⬜ Aplicar no Supabase (SQL Editor) a migração `20261102000001_week_templates.sql` **antes** de publicar a versão com Wochenvorlagen
 
 ## 2. Stripe
 - ✅ Conta Stripe em **modo de teste** (Sandbox), chave `sk_test_…` na Vercel

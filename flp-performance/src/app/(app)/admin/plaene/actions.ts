@@ -12,6 +12,7 @@ import {
   planSchema,
   sessionExerciseSchema,
   sessionSchema,
+  sessionUpdateSchema,
   type FormState,
 } from "@/lib/validation";
 
@@ -19,26 +20,39 @@ const builderPath = (planId: string) => `/admin/plaene/${planId}`;
 
 export async function createPlan(_: FormState, formData: FormData): Promise<FormState> {
   await requireStaff();
-  const values = keepValues(formData, ["title", "weekDate", "notes"]);
+  const values = keepValues(formData, ["title", "weekDate", "notes", "templateId"]);
   const parsed = planSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
   if (!isIsoDate(parsed.data.weekDate)) return { errors: { weekDate: "Ungültiges Datum." }, values };
+  const d = parsed.data;
+  const weekStart = mondayOf(d.weekDate);
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("training_plans")
-    .insert({
-      player_id: parsed.data.playerId,
-      title: parsed.data.title,
-      week_start: mondayOf(parsed.data.weekDate),
-      notes: parsed.data.notes,
-    })
-    .select("id")
-    .single();
-  if (error?.code === "23505") return { errors: { weekDate: "Für diese Woche gibt es bereits einen Plan." }, values };
-  if (error || !data) return { message: "Der Plan konnte nicht erstellt werden.", values };
-  revalidatePath(`/admin/spieler/${parsed.data.playerId}`);
-  redirect(builderPath(data.id));
+  let planId: string | null = null;
+  let errorCode: string | undefined;
+  if (d.templateId) {
+    // Plan und alle Trainingstage in einer Transaktion (Datenbankfunktion, RLS gilt)
+    const { data, error } = await supabase.rpc("apply_week_template", {
+      p_template: d.templateId,
+      p_player: d.playerId,
+      p_week_start: weekStart,
+      p_title: d.title,
+    });
+    planId = (data as string | null) ?? null;
+    errorCode = error?.code;
+  } else {
+    const { data, error } = await supabase
+      .from("training_plans")
+      .insert({ player_id: d.playerId, title: d.title, week_start: weekStart, notes: d.notes })
+      .select("id")
+      .single();
+    planId = data?.id ?? null;
+    errorCode = error?.code;
+  }
+  if (errorCode === "23505") return { errors: { weekDate: "Für diese Woche gibt es bereits einen Plan." }, values };
+  if (errorCode || !planId) return { message: "Der Plan konnte nicht erstellt werden.", values };
+  revalidatePath(`/admin/spieler/${d.playerId}`);
+  redirect(builderPath(planId));
 }
 
 const planStatusSchema = z.object({ planId: z.guid(), status: z.enum(["draft", "published"]) });
@@ -72,20 +86,41 @@ export async function deletePlan(formData: FormData) {
 
 export async function addSession(_: FormState, formData: FormData): Promise<FormState> {
   await requireStaff();
-  const values = keepValues(formData, ["title", "scheduledOn", "notes"]);
+  const values = keepValues(formData, ["title", "scheduledOn", "notes", "focus", "startsAt", "endsAt"]);
   const parsed = sessionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
+  const d = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.from("training_sessions").insert({
-    plan_id: parsed.data.planId,
-    title: parsed.data.title,
-    scheduled_on: parsed.data.scheduledOn,
-    notes: parsed.data.notes,
+    plan_id: d.planId,
+    title: d.title,
+    scheduled_on: d.scheduledOn,
+    notes: d.notes,
+    focus: d.focus,
+    starts_at: d.startsAt,
+    ends_at: d.endsAt,
   });
   if (error?.code === "23514") return { errors: { scheduledOn: "Der Tag muss in der Planwoche liegen." }, values };
   if (error) return { message: "Die Einheit konnte nicht gespeichert werden.", values };
-  revalidatePath(builderPath(parsed.data.planId));
+  revalidatePath(builderPath(d.planId));
   return { ok: true, values: { _n: crypto.randomUUID() } };
+}
+
+export async function updateSession(_: FormState, formData: FormData): Promise<FormState> {
+  await requireStaff();
+  const values = keepValues(formData, ["title", "notes", "focus", "startsAt", "endsAt"]);
+  const parsed = sessionUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
+  const d = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("training_sessions")
+    .update({ title: d.title, notes: d.notes, focus: d.focus, starts_at: d.startsAt, ends_at: d.endsAt })
+    .eq("id", d.sessionId)
+    .eq("plan_id", d.planId);
+  if (error) return { message: "Die Einheit konnte nicht gespeichert werden.", values };
+  revalidatePath(builderPath(d.planId));
+  return { ok: true, message: "Gespeichert.", values };
 }
 
 const sessionIdSchema = z.object({ planId: z.guid(), sessionId: z.guid() });

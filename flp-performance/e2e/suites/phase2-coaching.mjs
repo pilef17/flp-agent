@@ -112,7 +112,7 @@ const suite = () =>
     await parent.goto(`${BASE}/trainingsplan`);
     check(await seen(parent.getByRole("heading", { name: "Woche Technik" })), "Kalender zeigt veröffentlichten Plan");
     check(await seen(parent.getByText("· Heute")), "Heutiger Tag markiert");
-    check(await seen(parent.getByText("Kein Training", { exact: true })), "Tage ohne Training");
+    check(await seen(parent.getByText("Ruhetag", { exact: true })), "Tage ohne Training");
     const items = parent.locator("li:has(a[href^='/uebungen/'])");
     check((await items.nth(0).textContent()).includes("Koordinationsleiter"), "Reihenfolge beim Elternteil übernommen");
     check(await seen(parent.getByText("4 × 10 · Pause 30 Sek.")), "Dosierung sichtbar");
@@ -161,6 +161,55 @@ const suite = () =>
     await admin.getByText("Entwurf", { exact: true }).waitFor();
     await parent.goto(`${BASE}/trainingsplan`);
     check(await seen(parent.getByText("Kein Plan für diese Woche")), "Zurückgezogener Plan unsichtbar");
+
+    // 7. Wochenvorlagen: erstellen, anwenden, Fokus und Uhrzeit für die Familie
+    const nextMonday = addDays(monday, 7);
+    await admin.goto(`${BASE}/admin/vorlagen`);
+    check(await seen(admin.getByText("Wochenstruktur Kids")) && await seen(admin.getByText("Wochenstruktur Leistung")), "Startvorlagen vorhanden");
+    await admin.click("button:has-text('Vorlage erstellen')");
+    check(await seen(admin.getByText("Bitte einen Titel eingeben.")), "Vorlage: Validierung ohne Titel");
+    await admin.fill("#f-title", "Testwoche");
+    await admin.fill("#f-audience", "U12");
+    await admin.getByRole("checkbox", { name: /Montag/ }).check();
+    await admin.fill("#title_1", "Sprint & Reaktion");
+    await admin.selectOption("#focus_1", "schnelligkeit");
+    await admin.fill("#startsAt_1", "17:00"); await admin.fill("#endsAt_1", "16:00");
+    await admin.click("button:has-text('Vorlage erstellen')");
+    check(await seen(admin.getByText("Das Ende muss nach dem Beginn liegen.")), "Vorlage: Uhrzeit geprüft");
+    check(await admin.inputValue("#title_1") === "Sprint & Reaktion", "Vorlage: Eingaben bleiben erhalten");
+    await admin.fill("#endsAt_1", "18:00");
+    await admin.click("button:has-text('Vorlage erstellen')");
+    await admin.waitForURL(/\/admin\/vorlagen\/[0-9a-f-]{36}/);
+    check(await seen(admin.getByText("Vorlage erstellt.")), "Vorlage erstellt");
+    await admin.screenshot({ path: `${OUT}/p2_template_desktop.png`, fullPage: true });
+
+    await admin.goto(playerUrl);
+    await admin.getByRole("button", { name: "+ Neuen Wochenplan erstellen" }).click();
+    await admin.selectOption("#f-templateId", { label: "Testwoche (U12)" });
+    check(await seen(admin.getByText("Die Trainingstage, Uhrzeiten und Notizen kommen aus der Vorlage.")), "Vorlage gewählt: Hinweis statt Notizfeld");
+    await admin.fill("#f-title", "Woche aus Vorlage");
+    await admin.fill("#f-weekDate", nextMonday);
+    await admin.click("text=Plan erstellen");
+    await admin.waitForURL(/\/admin\/plaene\/[0-9a-f-]{36}/);
+    check(await seen(admin.getByRole("heading", { name: "Sprint & Reaktion" })), "Plan aus Vorlage enthält den Trainingstag");
+    check(await seen(admin.getByText("17:00–18:00 Uhr")), "Uhrzeit aus Vorlage übernommen");
+    check(await seen(admin.locator("span", { hasText: /^Schnelligkeit \/ Reaktion$/ })), "Fokus aus Vorlage übernommen");
+    await admin.locator("summary:has-text('Fokus, Uhrzeit und Titel ändern')").first().click();
+    await admin.locator("select[id^=focus-]").first().selectOption("technik");
+    await admin.click("button:has-text('Einheit speichern')");
+    check(await seen(admin.locator("span", { hasText: /^Technik \/ Taktik$/ })), "Fokus einer Einheit geändert");
+    await admin.locator("select[name=exerciseId]").first().selectOption({ label: "TEC-001 · Ballführung im Slalom" });
+    await admin.locator("form:has(select[name=exerciseId]) button[type=submit]").first().click();
+    await admin.locator("ol li").first().getByText("Ballführung im Slalom").waitFor();
+    await admin.getByRole("button", { name: "Für Familie veröffentlichen" }).click();
+    await admin.getByText("Veröffentlicht", { exact: true }).waitFor();
+
+    await parent.goto(`${BASE}/trainingsplan?woche=${nextMonday}`);
+    check(await seen(parent.getByRole("heading", { name: "Woche aus Vorlage" })), "Familie sieht Plan aus Vorlage");
+    check(await seen(parent.getByText("Technik / Taktik")) && await seen(parent.getByText("17:00–18:00 Uhr")), "Familie sieht Fokus und Uhrzeit");
+    await parent.screenshot({ path: `${OUT}/p2_week_focus_mobile.png`, fullPage: true });
+    await parent.goto(`${BASE}/admin/vorlagen`);
+    check(await parent.waitForURL(/\/(elternbereich|startseite)/, { timeout: 15000 }).then(() => true).catch(() => false), "Eltern: Vorlagen nicht erreichbar");
   });
 
 export default suite;
