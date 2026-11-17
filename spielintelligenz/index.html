@@ -1,9 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>50 Fragen zur Spielintelligenz</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="50 Fragen zur Spielintelligenz / 50 perguntas para a inteligência de jogo – FLP Performance">
+<meta name="theme-color" content="#0D0D0D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spielintelligenz">
+<link rel="manifest" href="/spielintelligenz/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/spielintelligenz/icon-192.png">
+<link rel="apple-touch-icon" href="/spielintelligenz/apple-touch-icon.png">
+<meta property="og:title" content="50 Fragen zur Spielintelligenz">
+<meta property="og:description" content="Eine Frage pro Training. Erst nachdenken, dann die Denkhilfe lesen. – FLP Performance">
+<meta property="og:image" content="/spielintelligenz/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Inter:wght@400;500;600&display=swap">
 <style>
+/* base reset for standalone hosting */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; -webkit-text-size-adjust: 100%; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
 /* Layout: one narrow column like a coach's clipboard — header, position chips, then one view (card / list / after-match) */
 :root {
   --bg: #0D0D0D;
@@ -71,7 +92,7 @@ h1 em { font-style: normal; color: var(--accent); }
 .seg { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .seg-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .seg-bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
-.seg span { font-size: .64rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
+.seg span { font-family: var(--font-display); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); line-height: 1.15; hyphens: auto; }
 
 /* tabs + chips */
 nav.tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
@@ -148,7 +169,8 @@ footer { color: var(--muted); font-size: .75rem; text-align: center; padding-top
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header>
     <div class="top">
@@ -639,3 +661,5 @@ footer { color: var(--muted); font-size: .75rem; text-align: center; padding-top
   render();
 })();
 </script>
+</body>
+</html>
