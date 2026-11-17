@@ -12,6 +12,24 @@ export const THEME_LABEL: Record<ThemeKey, string> = {
   kollektiv: "Kollektive Aktionen",
 };
 
+/** Kurzname für die vier Säulen-Etiketten auf dem Handy. */
+export const THEME_SHORT: Record<ThemeKey, string> = {
+  mentalitaet: "Mentalität",
+  koerper: "Körper",
+  individuell: "Individuell",
+  kollektiv: "Kollektiv",
+};
+
+/** Ein Satz, der die Säule für Kinder und Eltern erklärt (vor der Frage). */
+export const THEME_INTRO: Record<ThemeKey, string> = {
+  mentalitaet: "Wie du denkst und reagierst – besonders nach Fehlern und unter Druck.",
+  koerper: "Wie du dich bewegst: starten, bremsen, springen und stabil bleiben.",
+  individuell: "Was du allein mit dem Ball und gegen deinen Gegner machst.",
+  kollektiv: "Wie du mit deinen Mitspielern zusammen angreifst und verteidigst.",
+};
+
+export const THEME_ORDER: ThemeKey[] = ["mentalitaet", "koerper", "individuell", "kollektiv"];
+
 /** Spalte im Beurteilungsbogen (für das Trainer-Panel). */
 export const THEME_SHEET: Record<ThemeKey, string> = {
   mentalitaet: "Psychologische Variablen",

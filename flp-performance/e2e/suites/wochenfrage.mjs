@@ -21,7 +21,10 @@ const suite = () =>
     check(question.endsWith("?"), `Frage angezeigt: «${question}»`);
     check(await seen(kid.getByText("Nicht geübt")), "Option «Nicht geübt» vorhanden");
     check(await seen(kid.getByText("Woche 1 von 12")), "Fortschritt «Woche 1 von 12» sichtbar");
-    check(await seen(kid.getByText("Mentalität · Umgang mit Fehlern")), "Titel Thema · Fokus sichtbar");
+    check(await seen(kid.getByText("Fokus: Umgang mit Fehlern")), "Fokus der Woche sichtbar");
+    check(await seen(kid.getByText("Wie du denkst und reagierst", { exact: false })), "Erklärung der Säule vor der Frage");
+    check((await kid.locator('[aria-label="Die vier Säulen"] li').count()) === 4, "Vier Säulen angezeigt");
+    check((await kid.locator('[aria-label="Die vier Säulen"] li[aria-current]').textContent()) === "Mentalität", "Säule der Woche hervorgehoben");
     check(await seen(kid.getByText("Für Eltern:")), "Satz für die Eltern sichtbar");
     for (const label of ["Nie", "Selten", "Manchmal", "Oft", "Immer"]) {
       check(await seen(kid.getByText(label, { exact: true })), `Skala zeigt «${label}»`);

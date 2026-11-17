@@ -27,7 +27,8 @@ export default async function WochenfragePage() {
           questionKey={q.questionKey}
           weekNumber={q.weekNumber}
           totalWeeks={TOTAL_WEEKS}
-          title={`${q.themeLabel} · ${q.focus}`}
+          theme={q.theme}
+          focus={q.focus}
           question={q.question}
           parentNote={q.parentNote}
           task={q.task}

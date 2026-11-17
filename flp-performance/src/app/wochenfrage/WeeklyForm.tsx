@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitAnswer, type AnswerState } from "./actions";
-import { ANSWER_OPTIONS, NOT_PRACTICED, SCALE_LABEL } from "@/lib/wochenfrage";
+import { ANSWER_OPTIONS, NOT_PRACTICED, SCALE_LABEL, THEME_INTRO, THEME_LABEL, THEME_ORDER, THEME_SHORT, type ThemeKey } from "@/lib/wochenfrage";
 
 const NAME_KEY = "flp-wochenfrage-name";
 
@@ -40,7 +40,8 @@ type Props = {
   questionKey: string;
   weekNumber: number;
   totalWeeks: number;
-  title: string;
+  theme: ThemeKey;
+  focus: string;
   question: string;
   parentNote: string;
   task: string;
@@ -48,7 +49,7 @@ type Props = {
   next: string | null;
 };
 
-export function WeeklyForm({ questionKey, weekNumber, totalWeeks, title, question, parentNote, task, next }: Props) {
+export function WeeklyForm({ questionKey, weekNumber, totalWeeks, theme, focus, question, parentNote, task, next }: Props) {
   const [state, action] = useActionState<AnswerState, FormData>(submitAnswer, {});
   // «Antwort ändern» gilt nur für die zuletzt bestätigte Antwort
   const [editedState, setEditedState] = useState<AnswerState | null>(null);
@@ -108,7 +109,25 @@ export function WeeklyForm({ questionKey, weekNumber, totalWeeks, title, questio
     <form action={action} className="mt-10 flex flex-1 flex-col" noValidate>
       {eyebrow}
       {progress}
-      <p className="mt-8 text-sm font-medium text-gold-soft">{title}</p>
+      {/* Die vier Säulen des FLP-Beurteilungsbogens – die Säule dieser Woche ist hervorgehoben */}
+      <ul className="mt-8 grid grid-cols-4 gap-1.5" aria-label="Die vier Säulen">
+        {THEME_ORDER.map((t) => (
+          <li
+            key={t}
+            aria-current={t === theme ? "true" : undefined}
+            className={`truncate rounded-full border px-1 py-1.5 text-center text-[0.6875rem] font-medium ${
+              t === theme ? "border-gold bg-gold text-ink" : "border-line text-mute"
+            }`}
+          >
+            {THEME_SHORT[t]}
+          </li>
+        ))}
+      </ul>
+      <section className="mt-4 rounded-card border border-line bg-graphite px-4 py-3" aria-label="Thema der Woche">
+        <p className="text-sm font-semibold text-gold-soft">{THEME_LABEL[theme]}</p>
+        <p className="mt-1 text-sm text-mute">{THEME_INTRO[theme]}</p>
+      </section>
+      <p className="mt-6 text-sm font-medium text-gold-soft">Fokus: {focus}</p>
       <h1 className="mt-2 text-[2rem] font-extrabold leading-tight">{question}</h1>
       <p className="mt-4 border-l-2 border-gold/60 pl-3 text-sm text-mute">
         <span className="font-semibold text-paper">Für Eltern: </span>

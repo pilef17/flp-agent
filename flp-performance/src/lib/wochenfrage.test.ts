@@ -79,4 +79,9 @@ describe("Wochenfrage", () => {
     expect(cleanName("  Lio   Muster ")).toBe("Lio Muster");
     expect(athleteKey("LIO  muster")).toBe(athleteKey("lio Muster"));
   });
+
+  it("erklärt jede der vier Säulen", async () => {
+    const { THEME_INTRO, THEME_ORDER } = await import("./wochenfrage");
+    for (const t of THEME_ORDER) expect(THEME_INTRO[t].length).toBeLessThanOrEqual(80);
+  });
 });
