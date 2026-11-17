@@ -1,10 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicEnv } from "@/lib/env";
-import { isProtectedPath } from "@/lib/routes";
+import { isProtectedPath, isWochenfrageHost } from "@/lib/routes";
 
 /** Aktualisiert die Auth-Session-Cookies und schützt private Bereiche. */
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  // Eigene Domain für die Wochenfrage (z. B. frage.example.ch): Startseite = Frage
+  if (pathname === "/" && isWochenfrageHost(request.headers.get("host"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/wochenfrage";
+    return NextResponse.rewrite(url);
+  }
+  // Öffentliche Wochenfrage braucht keine Session – schneller auf dem Handy
+  if (pathname === "/wochenfrage") return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(publicEnv.supabaseUrl(), publicEnv.supabaseKey(), {

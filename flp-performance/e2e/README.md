@@ -10,6 +10,7 @@ Die Binärdateien werden in festen Versionen geladen und per SHA-256 geprüft.
 | `phase2-coaching` | Übungen, Plan-Builder, Trainingskalender, Bibliothek, Spielerprofil |
 | `phase3-entwicklung` | Beurteilungen, Entwicklung, Feedback, Coach-Rechte |
 | `phase4-shop` | Katalog, Stripe Checkout (stripe-mock), signierte Webhooks, Rückerstattung, manuelle Zugänge |
+| `wochenfrage` | Öffentliche Wochenfrage auf dem Handy (ohne Login), Validierung, Korrektur, Name merken, eigene Domain, privates Trainer-Panel mit Filtern, Zugriffsschutz |
 | `a11y-mobile` | Alle Seiten je Rolle auf 390 px und 1366 px: keine Überbreite, keine schweren WCAG-2.1-AA-Verstösse (axe-core) |
 
 Jede Suite prüft zusätzlich, dass keine Content-Security-Policy-Verletzung auftritt.

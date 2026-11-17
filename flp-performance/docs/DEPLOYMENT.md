@@ -25,6 +25,24 @@ Für die neue App ein **separates Vercel-Projekt** anlegen mit *Root Directory* 
 Framework = Next.js. Umgebungsvariablen aus `.env.example` setzen
 (`SUPABASE_SECRET_KEY` nur als Server-Variable, nie mit `NEXT_PUBLIC_`).
 
+## Wochenfrage mit eigener Domain
+Der Familien-Link funktioniert sofort unter `<SITE_URL>/wochenfrage`. Für einen Link ohne
+Plattformnamen (z. B. `https://frage.flp-performance.ch`):
+
+1. Vercel → Projekt → *Settings → Domains* → `frage.flp-performance.ch` hinzufügen.
+2. Beim Domain-Anbieter den angezeigten DNS-Eintrag setzen (für Subdomains ein `CNAME` auf
+   `cname.vercel-dns.com`). Vercel stellt das HTTPS-Zertifikat automatisch aus.
+3. Vercel → *Settings → Environment Variables*: `WOCHENFRAGE_HOST=frage.flp-performance.ch`
+   (Production) setzen und neu deployen.
+4. Prüfen: Die Domain öffnet direkt die Frage; im Trainer-Panel (`/admin/wochenfrage`) erscheint
+   der neue Link zum Kopieren bzw. Teilen per WhatsApp.
+
+Auf dieser Domain wird nur `/` auf die Wochenfrage umgeleitet; die übrige App bleibt unter der
+Hauptdomain. Die Frage wechselt jeden Donnerstag (Schweizer Zeit) automatisch. Der Zyklus
+(12 Wochen mit Datum, Thema, Item aus dem Beurteilungsbogen, Frage, Elternsatz, Auftrag) und die
+Pausen stehen in `src/lib/wochenfrage.ts` (`PLAN`, `PAUSES`). Nach Woche 12 zeigt der Link
+«Zyklus abgeschlossen», bis ein neuer Zyklus eingetragen wird.
+
 ## Checkliste
 - [ ] `npm run typecheck && npm run lint && npm test && npm run test:db` grün
 - [ ] Migrationen in Staging getestet, dann Produktion
