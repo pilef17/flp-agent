@@ -52,6 +52,9 @@ const suite = () =>
     check(await seen(kid.getByText("Danke, Lio Beispiel!")), "Bestätigung nach dem Senden");
     check(await seen(kid.getByText("Dein Auftrag fürs nächste Training")), "Auftrag fürs nächste Training nach dem Senden");
     check(await seen(kid.getByText("Nächste Frage: Donnerstag, 26.11.2026")), "Datum der nächsten Frage angezeigt");
+    const wa = decodeURIComponent((await kid.getByTestId("send-to-coach").getAttribute("href")) ?? "");
+    check(wa.startsWith("https://wa.me/41790000000?text="), "Knopf öffnet WhatsApp mit der Nummer des Trainers");
+    check(wa.includes("Athlet: Lio Beispiel") && wa.includes("Antwort: 4 · Oft") && wa.includes("Woche 1"), "WhatsApp-Nachricht enthält Name, Woche und Antwort");
     check(Date.now() - started < 5000, `Antwort in wenigen Sekunden gesendet (${Date.now() - started} ms)`);
     await kid.screenshot({ path: `${OUT}wochenfrage-handy-danke.png`, fullPage: true });
     check(sql(`select athlete_name || ':' || rating from public.weekly_answers where athlete_key='lio beispiel'`) === "Lio Beispiel:4", "Antwort in der Datenbank gespeichert");

@@ -43,6 +43,7 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 - ✅ Ciclo de 12 semanas ligado ao Beurteilungsbogen: 19.11.2026 → 18.02.2027, pausa em 24.12 e 31.12, nova avaliação a partir de 25.02.2027 (plano completo no painel → «Planung»)
 - ✅ Escala 1 Nie · 2 Selten · 3 Manchmal · 4 Oft · 5 Immer · Nicht geübt; frase para os pais; tarefa para o próximo treino após o envio
 - ⬜ Primeiro envio: **quinta-feira 19.11.2026**. Testar uma vez no seu celular real e apagar a resposta de teste no painel
+- ⬜ Vercel → Settings → Environment Variables: `WOCHENFRAGE_WHATSAPP` = seu número do WhatsApp (ex.: `+41791234567`) e fazer *Redeploy* → aparece o botão «Antwort an Trainer senden»
 - ⬜ Conferir as Sportferien de fevereiro do seu cantão (se cair no ciclo, adicionar a data em `PAUSES`)
 - ⬜ Antes de 25.02.2027: montar o próximo ciclo de 12 semanas
 - ⬜ Política de privacidade: mencionar que o nome da criança e a resposta são guardados (definir prazo para apagar)

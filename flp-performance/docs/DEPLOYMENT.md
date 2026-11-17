@@ -37,6 +37,11 @@ Plattformnamen (z. B. `https://frage.flp-performance.ch`):
 4. Prüfen: Die Domain öffnet direkt die Frage; im Trainer-Panel (`/admin/wochenfrage`) erscheint
    der neue Link zum Kopieren bzw. Teilen per WhatsApp.
 
+**Antwort an den Trainer per WhatsApp:** In Vercel `WOCHENFRAGE_WHATSAPP` (z. B. `+41791234567`)
+setzen und neu deployen. Nach dem Senden erscheint dann der Knopf «Antwort an Trainer senden»,
+der WhatsApp der Familie mit einer fertigen Nachricht (Woche, Frage, Athlet, Antwort) öffnet.
+Ohne Variable gibt es keinen Knopf. Die Antwort wird in jedem Fall zuerst in der Datenbank gespeichert.
+
 Auf dieser Domain wird nur `/` auf die Wochenfrage umgeleitet; die übrige App bleibt unter der
 Hauptdomain. Die Frage wechselt jeden Donnerstag (Schweizer Zeit) automatisch. Der Zyklus
 (12 Wochen mit Datum, Thema, Item aus dem Beurteilungsbogen, Frage, Elternsatz, Auftrag) und die

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  coachMessage,
+  whatsappNumber,
   answerLabel,
   athleteKey,
   cleanName,
@@ -83,5 +85,20 @@ describe("Wochenfrage", () => {
   it("erklärt jede der vier Säulen", async () => {
     const { THEME_INTRO, THEME_ORDER } = await import("./wochenfrage");
     for (const t of THEME_ORDER) expect(THEME_INTRO[t].length).toBeLessThanOrEqual(80);
+  });
+
+  it("normalisiert die WhatsApp-Nummer des Trainers", () => {
+    expect(whatsappNumber("+41 79 123 45 67")).toBe("41791234567");
+    expect(whatsappNumber("0041 79 123 45 67")).toBe("41791234567");
+    expect(whatsappNumber("079 123 45 67")).toBe("41791234567");
+    expect(whatsappNumber("")).toBeNull();
+    expect(whatsappNumber("123")).toBeNull();
+    expect(whatsappNumber(undefined)).toBeNull();
+  });
+
+  it("baut die Nachricht an den Trainer", () => {
+    expect(
+      coachMessage({ weekNumber: 1, title: "Mentalität · Umgang mit Fehlern", question: "Frage?", name: "Lio", answer: "4 · Oft" }),
+    ).toBe("FLP Wochenfrage · Woche 1\nMentalität · Umgang mit Fehlern\nFrage?\n\nAthlet: Lio\nAntwort: 4 · Oft");
   });
 });

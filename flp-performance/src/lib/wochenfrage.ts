@@ -274,3 +274,22 @@ export function answerLabel(rating: number | null): string {
 
 /** Erster Montag nach dem Zyklus = Zeit für die neue Beurteilung. */
 export const REASSESSMENT_DATE = addDays(PLAN[PLAN.length - 1].date, 7);
+
+/**
+ * WhatsApp-Nummer des Trainers für wa.me (nur Ziffern, international).
+ * Akzeptiert «+41 79 123 45 67», «0041791234567» oder «079 123 45 67» (Schweiz).
+ */
+export function whatsappNumber(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  let digits = raw.replace(/[^\d+]/g, "");
+  if (digits.startsWith("+")) digits = digits.slice(1);
+  else if (digits.startsWith("00")) digits = digits.slice(2);
+  else if (digits.startsWith("0")) digits = `41${digits.slice(1)}`;
+  digits = digits.replace(/\D/g, "");
+  return digits.length >= 9 && digits.length <= 15 ? digits : null;
+}
+
+/** Vorbereitete WhatsApp-Nachricht der Familie an den Trainer. */
+export function coachMessage(m: { weekNumber: number; title: string; question: string; name: string; answer: string }): string {
+  return [`FLP Wochenfrage · Woche ${m.weekNumber}`, m.title, m.question, "", `Athlet: ${m.name}`, `Antwort: ${m.answer}`].join("\n");
+}

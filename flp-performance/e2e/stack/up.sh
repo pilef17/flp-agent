@@ -105,6 +105,8 @@ SUPABASE_SECRET_KEY=$SERVICE
 NEXT_PUBLIC_SITE_URL=$APP_URL
 # Simuliert die eigene Domain der Wochenfrage: http://127.0.0.1:3100/ öffnet direkt die Frage
 WOCHENFRAGE_HOST=127.0.0.1:3100
+# Fiktive Trainer-Nummer für den Knopf «Antwort an Trainer senden»
+WOCHENFRAGE_WHATSAPP=+41790000000
 STRIPE_SECRET_KEY=sk_test_e2e
 STRIPE_WEBHOOK_SECRET=whsec_e2e_local_secret
 STRIPE_API_BASE=http://localhost:12111

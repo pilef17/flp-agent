@@ -2,13 +2,15 @@
 
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { athleteKey, cleanName, currentState, ANSWER_OPTIONS, NOT_PRACTICED } from "@/lib/wochenfrage";
+import { athleteKey, answerLabel, cleanName, currentState, ANSWER_OPTIONS, NOT_PRACTICED } from "@/lib/wochenfrage";
 
 export type AnswerState = {
   ok?: boolean;
   message?: string;
   errors?: { name?: string; answer?: string };
   name?: string;
+  /** Gesendete Antwort als Text, z. B. «4 · Oft» (für die Nachricht an den Trainer) */
+  answer?: string;
   /** Neue Frage seit dem Öffnen der Seite – Seite neu laden */
   stale?: boolean;
 };
@@ -42,6 +44,7 @@ export async function submitAnswer(_: AnswerState, formData: FormData): Promise<
     return { stale: true, name, message: "Inzwischen gibt es eine neue Frage. Bitte lade die Seite neu." };
   }
 
+  const rating = parsed.data.answer === NOT_PRACTICED ? null : Number(parsed.data.answer);
   const { error } = await createAdminClient()
     .from("weekly_answers")
     .upsert(
@@ -52,10 +55,10 @@ export async function submitAnswer(_: AnswerState, formData: FormData): Promise<
         question: q.question,
         athlete_name: parsed.data.name,
         athlete_key: athleteKey(parsed.data.name),
-        rating: parsed.data.answer === NOT_PRACTICED ? null : Number(parsed.data.answer),
+        rating,
       },
       { onConflict: "week_start,athlete_key" },
     );
   if (error) return { name, message: "Das hat leider nicht geklappt. Bitte versuche es nochmals." };
-  return { ok: true, name: parsed.data.name };
+  return { ok: true, name: parsed.data.name, answer: answerLabel(rating) };
 }
