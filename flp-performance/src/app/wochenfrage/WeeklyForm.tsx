@@ -3,22 +3,27 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitAnswer, type AnswerState } from "./actions";
-import { ANSWER_OPTIONS, NOT_PRACTICED, SCALE_LABEL, THEME_INTRO, THEME_LABEL, THEME_ORDER, THEME_SHORT, type ThemeKey } from "@/lib/wochenfrage";
+import { coachMessage, ANSWER_OPTIONS, NOT_PRACTICED, SCALE_LABEL, THEME_INTRO, THEME_LABEL, THEME_ORDER, THEME_SHORT, type ThemeKey } from "@/lib/wochenfrage";
 
 const NAME_KEY = "flp-wochenfrage-name";
+const PROFILE_KEY = "flp-wochenfrage-athlet";
 
-function readName(): string {
+type Profile = { name: string; age: string; team: string };
+
+/** Angaben vom letzten Mal (Name, Alter, Team) – nur auf diesem Handy gespeichert. */
+function readProfile(): Profile {
   try {
-    return localStorage.getItem(NAME_KEY) ?? "";
+    const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "null") as Partial<Profile> | null;
+    return { name: saved?.name ?? localStorage.getItem(NAME_KEY) ?? "", age: saved?.age ?? "", team: saved?.team ?? "" };
   } catch {
-    return "";
+    return { name: "", age: "", team: "" };
   }
 }
-function saveName(name: string) {
+function saveProfile(p: Profile) {
   try {
-    localStorage.setItem(NAME_KEY, name);
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
   } catch {
-    // privater Modus: Name wird einfach nicht gemerkt
+    // privater Modus: Angaben werden einfach nicht gemerkt
   }
 }
 
@@ -47,21 +52,30 @@ type Props = {
   task: string;
   /** «Donnerstag, 26.11.2026» oder null am Zyklusende */
   next: string | null;
+  /** WhatsApp-Nummer des Trainers (nur Ziffern) – ohne Nummer kein Knopf */
+  coachPhone: string | null;
 };
 
-export function WeeklyForm({ questionKey, weekNumber, totalWeeks, theme, focus, question, parentNote, task, next }: Props) {
+export function WeeklyForm({ questionKey, weekNumber, totalWeeks, theme, focus, question, parentNote, task, next, coachPhone }: Props) {
   const [state, action] = useActionState<AnswerState, FormData>(submitAnswer, {});
   // «Antwort ändern» gilt nur für die zuletzt bestätigte Antwort
   const [editedState, setEditedState] = useState<AnswerState | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const ageRef = useRef<HTMLInputElement>(null);
+  const teamRef = useRef<HTMLInputElement>(null);
 
-  // Name vom letzten Mal vorausfüllen – so dauert die Antwort nur zwei Tipps
+  // Angaben vom letzten Mal vorausfüllen – so dauert die Antwort nur zwei Tipps
   useEffect(() => {
-    const saved = readName();
-    if (saved && nameRef.current && !nameRef.current.value) nameRef.current.value = saved;
+    const saved = readProfile();
+    const fill = (el: HTMLInputElement | null, v: string) => {
+      if (el && v && !el.value) el.value = v;
+    };
+    fill(nameRef.current, saved.name);
+    fill(ageRef.current, saved.age);
+    fill(teamRef.current, saved.team);
   }, []);
   useEffect(() => {
-    if (state.ok && state.name) saveName(state.name);
+    if (state.ok && state.name) saveProfile({ name: state.name, age: state.age ?? "", team: state.team ?? "" });
   }, [state]);
 
   const eyebrow = (
@@ -95,6 +109,22 @@ export function WeeklyForm({ questionKey, weekNumber, totalWeeks, theme, focus, 
           <p className="eyebrow">Dein Auftrag fürs nächste Training</p>
           <p className="mt-3 font-display text-2xl font-bold leading-snug">{task}</p>
         </div>
+        {coachPhone && (
+          <a
+            href={`https://wa.me/${coachPhone}?text=${encodeURIComponent(
+              coachMessage({ weekNumber, title: `${THEME_LABEL[theme]} · ${focus}`, question, name: state.name ?? "", age: state.age ?? "", team: state.team ?? "", answer: state.answer ?? "" }),
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="send-to-coach"
+            className="mt-6 flex min-h-14 w-full items-center justify-center gap-2 rounded-card bg-gold px-5 text-base font-semibold tracking-wide text-ink transition-colors hover:bg-gold-soft"
+          >
+            <svg aria-hidden viewBox="0 0 24 24" className="size-5 fill-current">
+              <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.5-.3Z" />
+            </svg>
+            Antwort an Trainer senden
+          </a>
+        )}
         {next && <p className="mt-6 text-sm text-mute">Nächste Frage: {next}</p>}
 
         <button type="button" onClick={() => setEditedState(state)} className="mt-6 self-start text-sm text-mute underline underline-offset-4 hover:text-paper">
@@ -162,6 +192,58 @@ export function WeeklyForm({ questionKey, weekNumber, totalWeeks, theme, focus, 
       {err.name && (
         <p id="wf-name-err" className="mt-2 text-sm text-danger">
           {err.name}
+        </p>
+      )}
+
+      <div className="mt-5 grid grid-cols-[6.5rem_1fr] gap-3">
+        <div className="flex flex-col">
+          <label htmlFor="wf-age" className="text-sm font-medium">
+            Alter
+          </label>
+          <input
+            ref={ageRef}
+            id="wf-age"
+            name="age"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            autoComplete="off"
+            defaultValue={state.age ?? ""}
+            placeholder="z. B. 11"
+            aria-invalid={err.age ? true : undefined}
+            aria-describedby={err.age ? "wf-age-err" : undefined}
+            className="field mt-2"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="wf-team" className="text-sm font-medium">
+            Team / Verein
+          </label>
+          <input
+            ref={teamRef}
+            id="wf-team"
+            name="team"
+            type="text"
+            maxLength={60}
+            autoComplete="off"
+            autoCapitalize="words"
+            defaultValue={state.team ?? ""}
+            placeholder="z. B. FC Muster D-Junioren"
+            aria-invalid={err.team ? true : undefined}
+            aria-describedby={err.team ? "wf-team-err" : undefined}
+            className="field mt-2"
+          />
+        </div>
+      </div>
+      {err.age && (
+        <p id="wf-age-err" className="mt-2 text-sm text-danger">
+          {err.age}
+        </p>
+      )}
+      {err.team && (
+        <p id="wf-team-err" className="mt-2 text-sm text-danger">
+          {err.team}
         </p>
       )}
 

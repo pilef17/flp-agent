@@ -416,6 +416,8 @@ select tests.denied($$insert into public.weekly_answers (week_start, theme, ques
   values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Lio', 'lio', 3)$$, 'Wochenfrage: nur eine Antwort pro Athlet und Woche');
 select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
   values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Tim', 'tim', 9)$$, 'Wochenfrage: Bewertung nur 1–5');
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating, athlete_age, team)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Tom', 'tom', 3, 99, 'FC Test')$$, 'Wochenfrage: Alter nur 4–30');
 
 select tests.anon();
 select tests.denied($$select 1 from public.weekly_answers$$, 'Wochenfrage: anonym nicht lesbar');

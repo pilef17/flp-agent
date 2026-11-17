@@ -42,23 +42,33 @@ const suite = () =>
     // Ohne Auswahl → Hinweise
     await kid.getByRole("button", { name: "Antwort senden" }).tap();
     check(await seen(kid.getByText("Bitte gib deinen Namen ein.")), "Fehlender Name wird gemeldet");
+    check(await seen(kid.getByText("Bitte gib dein Alter ein.")), "Fehlendes Alter wird gemeldet");
+    check(await seen(kid.getByText("Bitte gib dein Team ein.")), "Fehlendes Team wird gemeldet");
     check(await seen(kid.getByText("Bitte wähle eine Antwort.")), "Fehlende Antwort wird gemeldet");
 
     // Antworten: Name + 4 antippen + senden
     const started = Date.now();
     await kid.fill("#wf-name", "Lio Beispiel");
+    await kid.fill("#wf-age", "11");
+    await kid.fill("#wf-team", "FC Muster D-Junioren");
     await kid.locator("label", { has: kid.locator('input[value="4"]') }).tap();
     await kid.getByRole("button", { name: "Antwort senden" }).tap();
     check(await seen(kid.getByText("Danke, Lio Beispiel!")), "Bestätigung nach dem Senden");
     check(await seen(kid.getByText("Dein Auftrag fürs nächste Training")), "Auftrag fürs nächste Training nach dem Senden");
     check(await seen(kid.getByText("Nächste Frage: Donnerstag, 26.11.2026")), "Datum der nächsten Frage angezeigt");
+    const wa = decodeURIComponent((await kid.getByTestId("send-to-coach").getAttribute("href")) ?? "");
+    check(wa.startsWith("https://wa.me/41790000000?text="), "Knopf öffnet WhatsApp mit der Nummer des Trainers");
+    check(wa.includes("Athlet: Lio Beispiel") && wa.includes("Alter: 11") && wa.includes("Team: FC Muster D-Junioren") && wa.includes("Antwort: 4 · Oft") && wa.includes("Woche 1"), "WhatsApp-Nachricht enthält Name, Alter, Team, Woche und Antwort");
     check(Date.now() - started < 5000, `Antwort in wenigen Sekunden gesendet (${Date.now() - started} ms)`);
     await kid.screenshot({ path: `${OUT}wochenfrage-handy-danke.png`, fullPage: true });
-    check(sql(`select athlete_name || ':' || rating from public.weekly_answers where athlete_key='lio beispiel'`) === "Lio Beispiel:4", "Antwort in der Datenbank gespeichert");
+    check(sql(`select athlete_name || ':' || athlete_age || ':' || team || ':' || rating from public.weekly_answers where athlete_key='lio beispiel'`) === "Lio Beispiel:11:FC Muster D-Junioren:4", "Antwort mit Alter und Team in der Datenbank gespeichert");
 
     // Nächster Besuch: Name ist gemerkt; Korrektur in derselben Woche ersetzt die Antwort
     await kid.goto(`${BASE}/wochenfrage`);
-    check((await kid.inputValue("#wf-name")) === "Lio Beispiel", "Name wird auf dem Handy gemerkt");
+    check(
+      (await kid.inputValue("#wf-name")) === "Lio Beispiel" && (await kid.inputValue("#wf-age")) === "11" && (await kid.inputValue("#wf-team")) === "FC Muster D-Junioren",
+      "Name, Alter und Team werden auf dem Handy gemerkt",
+    );
     await kid.locator("label", { has: kid.locator('input[value="5"]') }).tap();
     await kid.getByRole("button", { name: "Antwort senden" }).tap();
     await seen(kid.getByText("Danke, Lio Beispiel!"));
@@ -68,6 +78,8 @@ const suite = () =>
     const kid2 = await phone();
     await kid2.goto(`${BASE}/wochenfrage`);
     await kid2.fill("#wf-name", "Mia Test");
+    await kid2.fill("#wf-age", "10");
+    await kid2.fill("#wf-team", "FC Beispiel");
     await kid2.getByText("Nicht geübt").tap();
     await kid2.getByRole("button", { name: "Antwort senden" }).tap();
     check(await seen(kid2.getByText("Danke, Mia Test!")), "«Nicht geübt» kann gesendet werden");
@@ -83,6 +95,8 @@ const suite = () =>
     await custom.goto(`${customBase}/`);
     check((await custom.locator("h1").textContent())?.trim() === question, "Eigene Domain: Startseite zeigt direkt die Wochenfrage");
     await custom.fill("#wf-name", "Noah Domain");
+    await custom.fill("#wf-age", "12");
+    await custom.fill("#wf-team", "SC Test");
     await custom.locator("label", { has: custom.locator('input[value="3"]') }).tap();
     await custom.getByRole("button", { name: "Antwort senden" }).tap();
     check(await seen(custom.getByText("Danke, Noah Domain!")), "Eigene Domain: Senden funktioniert");
@@ -107,6 +121,7 @@ const suite = () =>
     await coach.goto(`${BASE}/admin/wochenfrage`);
     const list = coach.getByTestId("answers");
     check(await seen(list.getByText("Lio Beispiel")), "Panel (Handy): Antwort von Lio sichtbar");
+    check(await seen(list.locator("li", { hasText: "Lio Beispiel" }).getByText("11 J. · FC Muster D-Junioren")), "Panel zeigt Alter und Team");
     check(await seen(list.getByText("Noah Domain")), "Panel: Antwort über eigene Domain sichtbar");
     check((await list.locator("li", { hasText: "Lio Beispiel" }).getByLabel("Antwort 5 von 5").count()) === 1, "Panel: korrigierte Antwort 5 angezeigt");
     check(await seen(list.locator("li", { hasText: "Mia Test" }).getByText("Nicht geübt")), "Panel: «Nicht geübt» angezeigt");

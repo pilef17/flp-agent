@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
-import { currentState, longThursday, TOTAL_WEEKS } from "@/lib/wochenfrage";
+import { currentState, longThursday, whatsappNumber, TOTAL_WEEKS } from "@/lib/wochenfrage";
 import { WeeklyForm } from "./WeeklyForm";
 
 export const metadata: Metadata = {
@@ -33,6 +33,7 @@ export default async function WochenfragePage() {
           parentNote={q.parentNote}
           task={q.task}
           next={q.nextDate ? longThursday(q.nextDate) : null}
+          coachPhone={whatsappNumber(process.env.WOCHENFRAGE_WHATSAPP)}
         />
       ) : (
         <section className="mt-16">

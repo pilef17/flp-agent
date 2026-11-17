@@ -59,7 +59,7 @@ und alle E2E-Suiten.
 
 `npm run test:db` erstellt eine Wegwerf-Datenbank `flp_rls_test`, bildet die Supabase-Objekte `auth`/`storage`
 minimal nach (`supabase/tests/supabase_stub.sql`), wendet alle Migrationen an und führt
-`supabase/tests/rls_test.sql` aus (aktuell 120 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
+`supabase/tests/rls_test.sql` aus (aktuell 121 Prüfungen). Es braucht dafür Superuser-Rechte (z. B. `sudo -u postgres npm run test:db`).
 
 ## Struktur
 
