@@ -19,6 +19,8 @@ type Answer = {
   question: string;
   athlete_name: string;
   athlete_key: string;
+  athlete_age: number | null;
+  team: string | null;
   rating: number | null;
   updated_at: string;
 };
@@ -47,7 +49,7 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
   const supabase = await createClient();
   let query = supabase
     .from("weekly_answers")
-    .select("id, week_start, theme, question, athlete_name, athlete_key, rating, updated_at")
+    .select("id, week_start, theme, question, athlete_name, athlete_key, athlete_age, team, rating, updated_at")
     .order("week_start", { ascending: false })
     .order("athlete_name")
     .limit(1000);
@@ -220,6 +222,11 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
                       <Link href={`/admin/wochenfrage?athlet=${encodeURIComponent(r.athlete_key)}`} className="hover:text-gold">
                         {r.athlete_name}
                       </Link>
+                      {(r.athlete_age || r.team) && (
+                        <span className="ml-2 text-sm font-normal text-mute">
+                          {[r.athlete_age ? `${r.athlete_age} J.` : null, r.team].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
                     </p>
                     <p className="mt-0.5 text-sm text-mute">
                       <Link href={`/admin/wochenfrage?woche=${r.week_start}`} className="hover:text-paper">

@@ -98,7 +98,7 @@ describe("Wochenfrage", () => {
 
   it("baut die Nachricht an den Trainer", () => {
     expect(
-      coachMessage({ weekNumber: 1, title: "Mentalität · Umgang mit Fehlern", question: "Frage?", name: "Lio", answer: "4 · Oft" }),
-    ).toBe("FLP Wochenfrage · Woche 1\nMentalität · Umgang mit Fehlern\nFrage?\n\nAthlet: Lio\nAntwort: 4 · Oft");
+      coachMessage({ weekNumber: 1, title: "Mentalität · Umgang mit Fehlern", question: "Frage?", name: "Lio", age: "11", team: "FC Muster", answer: "4 · Oft" }),
+    ).toBe("FLP Wochenfrage · Woche 1\nMentalität · Umgang mit Fehlern\nFrage?\n\nAthlet: Lio\nAlter: 11\nTeam: FC Muster\nAntwort: 4 · Oft");
   });
 });

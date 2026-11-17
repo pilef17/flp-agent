@@ -290,6 +290,23 @@ export function whatsappNumber(raw: string | undefined | null): string | null {
 }
 
 /** Vorbereitete WhatsApp-Nachricht der Familie an den Trainer. */
-export function coachMessage(m: { weekNumber: number; title: string; question: string; name: string; answer: string }): string {
-  return [`FLP Wochenfrage · Woche ${m.weekNumber}`, m.title, m.question, "", `Athlet: ${m.name}`, `Antwort: ${m.answer}`].join("\n");
+export function coachMessage(m: {
+  weekNumber: number;
+  title: string;
+  question: string;
+  name: string;
+  age: string;
+  team: string;
+  answer: string;
+}): string {
+  return [
+    `FLP Wochenfrage · Woche ${m.weekNumber}`,
+    m.title,
+    m.question,
+    "",
+    `Athlet: ${m.name}`,
+    `Alter: ${m.age}`,
+    `Team: ${m.team}`,
+    `Antwort: ${m.answer}`,
+  ].join("\n");
 }
