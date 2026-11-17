@@ -38,8 +38,10 @@ Plattformnamen (z. B. `https://frage.flp-performance.ch`):
    der neue Link zum Kopieren bzw. Teilen per WhatsApp.
 
 Auf dieser Domain wird nur `/` auf die Wochenfrage umgeleitet; die übrige App bleibt unter der
-Hauptdomain. Die Frage wechselt jeden Donnerstag (Schweizer Zeit) automatisch, Startdatum und
-Fragenkatalog stehen in `src/lib/wochenfrage.ts`.
+Hauptdomain. Die Frage wechselt jeden Donnerstag (Schweizer Zeit) automatisch. Der Zyklus
+(12 Wochen mit Datum, Thema, Item aus dem Beurteilungsbogen, Frage, Elternsatz, Auftrag) und die
+Pausen stehen in `src/lib/wochenfrage.ts` (`PLAN`, `PAUSES`). Nach Woche 12 zeigt der Link
+«Zyklus abgeschlossen», bis ein neuer Zyklus eingetragen wird.
 
 ## Checkliste
 - [ ] `npm run typecheck && npm run lint && npm test && npm run test:db` grün

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { athleteKey, cleanName, currentQuestion, ANSWER_OPTIONS, NOT_PRACTICED } from "@/lib/wochenfrage";
+import { athleteKey, cleanName, currentState, ANSWER_OPTIONS, NOT_PRACTICED } from "@/lib/wochenfrage";
 
 export type AnswerState = {
   ok?: boolean;
@@ -35,10 +35,10 @@ export async function submitAnswer(_: AnswerState, formData: FormData): Promise<
     }
     return { errors, name };
   }
-  const q = currentQuestion();
+  const q = currentState();
   // Bots füllen das versteckte Feld aus: so tun, als wäre alles gut
   if (parsed.data.website) return { ok: true, name: parsed.data.name };
-  if (parsed.data.questionKey !== q.questionKey) {
+  if (q.status !== "active" || parsed.data.questionKey !== q.questionKey) {
     return { stale: true, name, message: "Inzwischen gibt es eine neue Frage. Bitte lade die Seite neu." };
   }
 

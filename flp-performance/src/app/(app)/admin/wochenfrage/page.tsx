@@ -3,8 +3,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
-import { addDays, todayInSwitzerland } from "@/lib/dates";
-import { answerLabel, currentQuestion, questionForDate, weekLabel, weekName, THEME_LABEL, type ThemeKey } from "@/lib/wochenfrage";
+import { answerLabel, currentState, longThursday, planWeekOf, weekLabel, weekName, PLAN, PAUSES, REASSESSMENT_DATE, THEME_LABEL, THEME_SHEET, type ThemeKey } from "@/lib/wochenfrage";
 import { PageHeader, EmptyState, Badge } from "@/components/ui/Feedback";
 import { Card, CardTitle, Stat } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
@@ -69,17 +68,16 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
     if (!athletes.has(o.athlete_key)) athletes.set(o.athlete_key, o.athlete_name);
     weeks.add(o.week_start);
   }
-  const now = currentQuestion();
-  weeks.add(now.weekStart);
+  const now = currentState();
+  if (now.status === "active") weeks.add(now.weekStart);
   const athleteList = [...athletes].sort((a, b) => a[1].localeCompare(b[1], "de-CH"));
   const weekList = [...weeks].sort().reverse();
 
   const rated = rows.filter((r) => r.rating !== null);
   const avg = rated.length ? (rated.reduce((s, r) => s + (r.rating ?? 0), 0) / rated.length).toFixed(1) : "–";
   const notPracticed = rows.length - rated.length;
-  const next = questionForDate(addDays(now.weekStart, 7));
   const filtered = Boolean(athlete || week);
-  const today = todayInSwitzerland();
+  const shortDate = (d: string) => d.split("-").reverse().join(".");
 
   return (
     <>
@@ -98,13 +96,70 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
           </p>
         </Card>
         <Card>
-          <CardTitle eyebrow={`Woche ${now.weekNumber} · ${now.themeLabel}`} title="Aktuelle Frage" />
-          <p className="font-display text-xl font-semibold">{now.question}</p>
-          <p className="mt-5 border-t border-line pt-4 text-sm text-mute">
-            Ab Donnerstag {next.weekStart.split("-").reverse().join(".")}: <span className="text-paper">{next.themeLabel}</span> · {next.question}
-          </p>
+          {now.status === "active" ? (
+            <>
+              <CardTitle eyebrow={`Woche ${now.weekNumber} von ${PLAN.length} · ${now.themeLabel}`} title={now.focus} />
+              <p className="font-display text-xl font-semibold">{now.question}</p>
+              <dl className="mt-4 grid gap-2 text-sm">
+                <div>
+                  <dt className="inline text-mute">Beurteilungsbogen: </dt>
+                  <dd className="inline">{THEME_SHEET[now.theme]} → {now.item}</dd>
+                </div>
+                <div>
+                  <dt className="inline text-mute">Für Eltern: </dt>
+                  <dd className="inline">{now.parentNote}</dd>
+                </div>
+                <div>
+                  <dt className="inline text-mute">Auftrag: </dt>
+                  <dd className="inline">{now.task}</dd>
+                </div>
+              </dl>
+              <p className="mt-4 border-t border-line pt-4 text-sm text-mute">
+                {now.nextDate ? `Nächste Frage: ${longThursday(now.nextDate)}` : `Letzte Woche des Zyklus – neue Beurteilung ab ${shortDate(REASSESSMENT_DATE)}.`}
+              </p>
+            </>
+          ) : (
+            <>
+              <CardTitle eyebrow="Aktuelle Woche" title={now.status === "pause" ? "Pause (Feiertage)" : "Zyklus abgeschlossen"} />
+              <p className="text-sm text-mute">
+                {now.status === "pause"
+                  ? `Familien sehen einen Pausenhinweis. Weiter am ${longThursday(now.nextDate)}.`
+                  : "Zeit für die neue Beurteilung mit dem Beurteilungsbogen. Für einen neuen Zyklus den Plan in src/lib/wochenfrage.ts ergänzen."}
+              </p>
+            </>
+          )}
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <details>
+          <summary className="cursor-pointer list-none">
+            <span className="eyebrow">Planung</span>
+            <span className="mt-1.5 block font-display text-xl font-bold sm:text-2xl">Zyklus: 12 Wochen + neue Beurteilung ▾</span>
+          </summary>
+          <ol className="mt-5 divide-y divide-line text-sm">
+            {PLAN.map((w, i) => (
+              <li
+                key={w.date}
+                className={`grid gap-1 py-3 sm:grid-cols-[7rem_1fr] ${now.status === "active" && now.weekNumber === i + 1 ? "text-gold" : ""}`}
+              >
+                <span className="text-mute">
+                  {i + 1}. · {shortDate(w.date)}
+                </span>
+                <span>
+                  <span className="font-semibold">
+                    {THEME_LABEL[w.theme]} · {w.focus}
+                  </span>{" "}
+                  <span className="text-mute">({w.item})</span>
+                  <span className="block">{w.question}</span>
+                </span>
+              </li>
+            ))}
+            <li className="py-3 text-mute">Pause: {PAUSES.map(shortDate).join(", ")}</li>
+            <li className="py-3 font-semibold">Ab {shortDate(REASSESSMENT_DATE)}: neue Beurteilung mit dem Beurteilungsbogen</li>
+          </ol>
+        </details>
+      </Card>
 
       <Card className="mt-6">
         <CardTitle eyebrow="Antworten" title={filtered ? "Gefilterte Antworten" : "Alle Antworten"} />
@@ -157,6 +212,7 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
         ) : (
           <ul className="mt-6 divide-y divide-line" data-testid="answers">
             {rows.map((r) => {
+              const plan = planWeekOf(r.week_start);
               return (
                 <li key={r.id} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 py-4">
                   <div className="min-w-0">
@@ -168,12 +224,13 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
                     <p className="mt-0.5 text-sm text-mute">
                       <Link href={`/admin/wochenfrage?woche=${r.week_start}`} className="hover:text-paper">
                         {weekName(r.week_start)} · {THEME_LABEL[r.theme]}
+                        {plan ? ` · ${plan.item}` : ""}
                       </Link>
                     </p>
                     <p className="mt-1 text-sm">{r.question}</p>
                     <p className="mt-1 text-xs text-mute">
                       {timeFmt.format(new Date(r.updated_at))}
-                      {r.week_start === now.weekStart && r.week_start <= today ? " · diese Woche" : ""}
+                      {now.status === "active" && r.week_start === now.weekStart ? " · diese Woche" : ""}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -182,11 +239,13 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
                     ) : (
                       <span
                         className="grid size-12 place-items-center rounded-card border border-gold/60 font-display text-2xl font-bold text-gold"
-                        aria-label={`Antwort ${answerLabel(r.rating)} von 5`}
+                        aria-label={`Antwort ${r.rating} von 5`}
+                        title={answerLabel(r.rating)}
                       >
                         {r.rating}
                       </span>
                     )}
+                    {r.rating !== null && <span className="text-xs text-mute">{answerLabel(r.rating).split(" · ")[1]}</span>}
                     <form action={deleteAnswer}>
                       <input type="hidden" name="answerId" value={r.id} />
                       <button type="submit" className="text-xs text-mute hover:text-danger" aria-label={`Antwort von ${r.athlete_name} löschen`}>

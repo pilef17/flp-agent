@@ -20,6 +20,12 @@ const suite = () =>
     const question = (await kid.locator("h1").textContent())?.trim() ?? "";
     check(question.endsWith("?"), `Frage angezeigt: «${question}»`);
     check(await seen(kid.getByText("Nicht geübt")), "Option «Nicht geübt» vorhanden");
+    check(await seen(kid.getByText("Woche 1 von 12")), "Fortschritt «Woche 1 von 12» sichtbar");
+    check(await seen(kid.getByText("Mentalität · Umgang mit Fehlern")), "Titel Thema · Fokus sichtbar");
+    check(await seen(kid.getByText("Für Eltern:")), "Satz für die Eltern sichtbar");
+    for (const label of ["Nie", "Selten", "Manchmal", "Oft", "Immer"]) {
+      check(await seen(kid.getByText(label, { exact: true })), `Skala zeigt «${label}»`);
+    }
     for (const n of ["1", "2", "3", "4", "5"]) {
       check((await kid.locator(`input[name=answer][value="${n}"]`).count()) === 1, `Option ${n} vorhanden`);
     }
@@ -41,6 +47,8 @@ const suite = () =>
     await kid.locator("label", { has: kid.locator('input[value="4"]') }).tap();
     await kid.getByRole("button", { name: "Antwort senden" }).tap();
     check(await seen(kid.getByText("Danke, Lio Beispiel!")), "Bestätigung nach dem Senden");
+    check(await seen(kid.getByText("Dein Auftrag fürs nächste Training")), "Auftrag fürs nächste Training nach dem Senden");
+    check(await seen(kid.getByText("Nächste Frage: Donnerstag, 26.11.2026")), "Datum der nächsten Frage angezeigt");
     check(Date.now() - started < 5000, `Antwort in wenigen Sekunden gesendet (${Date.now() - started} ms)`);
     await kid.screenshot({ path: `${OUT}wochenfrage-handy-danke.png`, fullPage: true });
     check(sql(`select athlete_name || ':' || rating from public.weekly_answers where athlete_key='lio beispiel'`) === "Lio Beispiel:4", "Antwort in der Datenbank gespeichert");
@@ -101,6 +109,8 @@ const suite = () =>
     check(await seen(list.locator("li", { hasText: "Mia Test" }).getByText("Nicht geübt")), "Panel: «Nicht geübt» angezeigt");
     check((await coach.getByTestId("family-link").textContent())?.trim() === "https://127.0.0.1:3100", "Panel zeigt den Link der eigenen Domain");
     check((await coach.locator("main h2, section p.font-display").filter({ hasText: question }).count()) >= 1, "Panel zeigt die aktuelle Frage");
+    check(await seen(coach.getByText("Psychologische Variablen → Emotionale Stabilität")), "Panel zeigt das Item aus dem Beurteilungsbogen");
+    check((await coach.locator("details li").count()) === 14, "Panel zeigt den ganzen Zyklus (12 Wochen + Pause + Beurteilung)");
     await coach.screenshot({ path: `${OUT}wochenfrage-panel-handy.png`, fullPage: true });
 
     // Filter Athlet

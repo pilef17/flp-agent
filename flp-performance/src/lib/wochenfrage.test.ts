@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { weekLabel, athleteKey, cleanName, currentQuestion, questionForDate, thursdayOf, THEMES, WOCHENFRAGE_START } from "./wochenfrage";
+import {
+  answerLabel,
+  athleteKey,
+  cleanName,
+  currentState,
+  PLAN,
+  stateForDate,
+  thursdayOf,
+  weekLabel,
+  WOCHENFRAGE_START,
+} from "./wochenfrage";
 
 describe("Wochenfrage", () => {
   it("wechselt am Donnerstag", () => {
@@ -9,46 +19,64 @@ describe("Wochenfrage", () => {
     expect(thursdayOf("2026-11-22")).toBe("2026-11-19"); // Sonntag
   });
 
-  it("startet mit den vier Themen in der verlangten Reihenfolge", () => {
-    const weeks = [0, 7, 14, 21].map((d) => questionForDate(new Date(Date.parse(`${WOCHENFRAGE_START}T00:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10)));
-    expect(weeks.map((w) => `${w.themeLabel} · ${w.question}`)).toEqual([
-      "Mentalität · Hast du nach dem Fehler wieder den Ball gefordert?",
-      "Körperliche Fähigkeiten · Bist du beim Bremsen stabil geblieben?",
-      "Individuelle Aktionen · Hast du den Ball mit dem Körper geschützt?",
-      "Kollektive Aktionen · Hast du dich nach dem Pass freigelaufen?",
-    ]);
-    expect(weeks.map((w) => w.weekNumber)).toEqual([1, 2, 3, 4]);
+  it("hat 12 Wochen, nur Donnerstage, Themen im festen Wechsel", () => {
+    expect(PLAN).toHaveLength(12);
+    const order = ["mentalitaet", "koerper", "individuell", "kollektiv"];
+    PLAN.forEach((w, i) => {
+      expect(new Date(`${w.date}T00:00:00Z`).getUTCDay()).toBe(4);
+      expect(w.theme).toBe(order[i % 4]);
+      // kurz genug für Kinder
+      expect(w.question.length).toBeLessThanOrEqual(65);
+      expect(w.question.endsWith("?")).toBe(true);
+    });
+    expect(new Set(PLAN.map((w) => w.question)).size).toBe(12);
   });
 
-  it("wiederholt die Themen ab Woche 5 mit neuen Punkten", () => {
-    const w5 = questionForDate("2026-12-17");
-    expect(w5.weekNumber).toBe(5);
-    expect(w5.theme).toBe("mentalitaet");
-    expect(w5.questionKey).toBe("mentalitaet-2");
-    expect(w5.question).not.toBe(THEMES[0].questions[0]);
-    // Alle Fragen sind kurz genug für Kinder
-    for (const t of THEMES) for (const q of t.questions) expect(q.length).toBeLessThanOrEqual(65);
+  it("zeigt Woche 1 mit Titel, Elternsatz und Auftrag", () => {
+    const s = stateForDate("2026-11-20");
+    expect(s.status).toBe("active");
+    if (s.status !== "active") return;
+    expect(s.weekNumber).toBe(1);
+    expect(`${s.themeLabel} · ${s.focus}`).toBe("Mentalität · Umgang mit Fehlern");
+    expect(s.parentNote).toMatch(/Mut/);
+    expect(s.task).toBeTruthy();
+    expect(s.nextDate).toBe("2026-11-26");
   });
 
-  it("vor dem Start gilt Woche 1, die Serie läuft danach endlos weiter", () => {
-    expect(questionForDate("2026-11-17").weekStart).toBe(WOCHENFRAGE_START);
-    expect(questionForDate("2026-11-17").weekNumber).toBe(1);
-    const late = questionForDate("2028-06-01");
-    expect(late.question).toBeTruthy();
+  it("pausiert über die Feiertage und macht im Januar weiter", () => {
+    const xmas = stateForDate("2026-12-25");
+    expect(xmas).toEqual({ status: "pause", weekStart: "2026-12-24", nextDate: "2027-01-07" });
+    expect(stateForDate("2026-12-31").status).toBe("pause");
+    const w5 = stateForDate("2026-12-17");
+    expect(w5.status === "active" && w5.nextDate).toBe("2027-01-07");
+    const w6 = stateForDate("2027-01-08");
+    expect(w6.status === "active" && w6.weekNumber).toBe(6);
+  });
+
+  it("vor dem Start gilt Woche 1, nach Woche 12 ist der Zyklus zu Ende", () => {
+    const pre = stateForDate("2026-11-17");
+    expect(pre.status === "active" && pre.weekStart).toBe(WOCHENFRAGE_START);
+    const last = stateForDate("2027-02-24");
+    expect(last.status === "active" && last.weekNumber).toBe(12);
+    expect(last.status === "active" && last.nextDate).toBeNull();
+    expect(stateForDate("2027-02-25").status).toBe("ended");
   });
 
   it("verwendet Schweizer Zeit (Donnerstag 00:30 in Zürich)", () => {
     // 25.11.2026 23:30 UTC = 26.11.2026 00:30 in Zürich → Woche 2
-    expect(currentQuestion(new Date("2026-11-25T23:30:00Z")).weekNumber).toBe(2);
+    const s = currentState(new Date("2026-11-25T23:30:00Z"));
+    expect(s.status === "active" && s.weekNumber).toBe(2);
+  });
+
+  it("beschriftet Wochen und Antworten", () => {
+    expect(weekLabel("2026-11-26")).toBe("Woche 2 · 26.11. · Körperliche Fähigkeiten");
+    expect(weekLabel("2026-11-12")).toBe("Vor dem Start · 12.11.");
+    expect(answerLabel(4)).toBe("4 · Oft");
+    expect(answerLabel(null)).toBe("Nicht geübt");
   });
 
   it("erkennt dieselbe Person trotz Schreibweise", () => {
     expect(cleanName("  Lio   Muster ")).toBe("Lio Muster");
     expect(athleteKey("LIO  muster")).toBe(athleteKey("lio Muster"));
-  });
-
-  it("beschriftet Wochen für den Filter", () => {
-    expect(weekLabel("2026-11-26")).toBe("Woche 2 · ab 26.11. · Körperliche Fähigkeiten");
-    expect(weekLabel("2026-11-12")).toBe("Vor dem Start · ab 12.11.");
   });
 });
