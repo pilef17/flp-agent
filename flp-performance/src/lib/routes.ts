@@ -20,6 +20,16 @@ export function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/**
+ * Eigene Domain für den Familien-Link (Umgebungsvariable WOCHENFRAGE_HOST, z. B.
+ * «frage.flp-performance.ch»). Auf dieser Domain öffnet «/» direkt die Wochenfrage.
+ */
+export function isWochenfrageHost(host: string | null, configured = process.env.WOCHENFRAGE_HOST): boolean {
+  if (!host || !configured) return false;
+  const bare = (h: string) => h.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
+  return bare(host) === bare(configured);
+}
+
 /** Verhindert Open Redirects: nur relative, interne Pfade sind erlaubt. */
 export function safeNextPath(next: string | null | undefined, fallback = "/startseite"): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
@@ -57,13 +67,16 @@ export type NavItem = {
 
 export function navFor(roles: readonly Role[]): NavItem[] {
   if (isStaff(roles)) {
+    const isAdmin = roles.includes("admin");
     const items: NavItem[] = [
       { href: "/admin", label: "Übersicht", short: "Start" },
       { href: "/admin/spieler", label: "Spieler" },
-      { href: "/admin/uebungen", label: "Übungen" },
+      // Admin: auf dem Handy über die Übersicht erreichbar (max. 5 Einträge in der Leiste)
+      { href: "/admin/uebungen", label: "Übungen", desktopOnly: isAdmin },
       { href: "/admin/beurteilungen", label: "Beurteilungen", short: "Bewertung" },
+      { href: "/admin/wochenfrage", label: "Wochenfrage", short: "Frage" },
     ];
-    if (roles.includes("admin")) {
+    if (isAdmin) {
       items.push({ href: "/admin/produkte", label: "Shop" });
       items.push({ href: "/admin/datenschutz", label: "Datenschutz", desktopOnly: true });
     }

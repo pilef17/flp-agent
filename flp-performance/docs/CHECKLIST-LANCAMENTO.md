@@ -34,6 +34,15 @@ Lista do que precisa estar feito **antes de abrir para clientes reais**.
 - ✅ Compra de teste e estorno (acima)
 - ⬜ Instalar como app (PWA) no celular
 
+## 3b. Wochenfrage (pergunta semanal pelo WhatsApp)
+- ✅ Link público sem login: `https://flp-performance.vercel.app/wochenfrage` (abre direto na pergunta)
+- ✅ Painel privado do treinador: Admin → **Wochenfrage** (filtros por atleta e semana, link para copiar/WhatsApp)
+- ✅ Testado em celular simulado (iPhone): envio, confirmação, correção da resposta e aparição no painel
+- ⬜ Aplicar a migração `20261117000001_weekly_questions.sql` no Supabase (SQL Editor) antes do deploy
+- ⬜ Domínio próprio para o link (ex.: `frage.flp-performance.ch`): passos em `docs/DEPLOYMENT.md` → «Wochenfrage mit eigener Domain»
+- ⬜ Primeiro envio: **quinta-feira 19.11.2026** (semana 1 = Mentalität). Testar uma vez no seu celular real e apagar a resposta de teste no painel
+- ⬜ Política de privacidade: mencionar que o nome da criança e a resposta são guardados (definir prazo para apagar)
+
 ## 4. Jurídico e proteção de dados (revisão por especialista)
 - ⬜ **Política de privacidade** definitiva (hoje é rascunho em `/datenschutz`): responsável, endereço, contato, prestadores (Supabase, Vercel, Stripe, e-mail), regiões dos dados, transferências para os EUA
 - ⬜ Verificar se o **RGPD/DSGVO** se aplica (clientes na UE?) além da lei suíça (**revDSG**)
