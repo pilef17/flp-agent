@@ -1,0 +1,641 @@
+<title>50 Fragen zur Spielintelligenz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column like a coach's clipboard — header, position chips, then one view (card / list / after-match) */
+:root {
+  --bg: #0D0D0D;
+  --panel: #161816;
+  --line: #2A2D2A;
+  --fg: #ECEEEC;
+  --muted: #8A908B;
+  --accent: #00E676;
+  --accent-ink: #0D0D0D;
+  --accent-soft: rgba(0,230,118,.12);
+  --warn: #FFB300;
+  --warn-soft: rgba(255,179,0,.14);
+  --pitch: rgba(0,230,118,.07);
+  --font-display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F3F5F3; --panel: #FFFFFF; --line: #DCE1DC; --fg: #111411; --muted: #5E665F;
+    --accent: #00994F; --accent-ink: #FFFFFF; --accent-soft: rgba(0,153,79,.10);
+    --warn: #A86A00; --warn-soft: rgba(168,106,0,.12); --pitch: rgba(0,153,79,.07);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F3F5F3; --panel: #FFFFFF; --line: #DCE1DC; --fg: #111411; --muted: #5E665F;
+  --accent: #00994F; --accent-ink: #FFFFFF; --accent-soft: rgba(0,153,79,.10);
+  --warn: #A86A00; --warn-soft: rgba(168,106,0,.12); --pitch: rgba(0,153,79,.07);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 640px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+header { display: flex; flex-direction: column; gap: 10px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: .85rem; color: var(--muted); }
+.brand b { background: var(--accent); color: var(--accent-ink); padding: 2px 7px; border-radius: 4px; letter-spacing: .06em; }
+.lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.lang button { background: none; border: 0; padding: 4px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+h1 { font-family: var(--font-display); font-weight: 900; text-transform: uppercase; font-size: clamp(2rem, 7vw, 2.8rem); line-height: .95; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--accent); }
+.sub { color: var(--muted); margin: 0; max-width: 52ch; }
+
+/* progress */
+.progress { display: flex; flex-direction: column; gap: 8px; }
+.progress-row { display: flex; justify-content: space-between; align-items: baseline; font-size: .8rem; color: var(--muted); }
+.progress-row strong { font-family: var(--font-display); font-size: 1.3rem; color: var(--fg); font-variant-numeric: tabular-nums; }
+.segs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.seg { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.seg-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.seg-bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.seg span { font-size: .64rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
+
+/* tabs + chips */
+nav.tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 4px; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 1rem; color: var(--muted); }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.filter { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: .8rem; font-weight: 600; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+/* card */
+.card {
+  position: relative; overflow: hidden;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 16px;
+}
+/* faint pitch markings: halfway line + centre circle */
+.card::before {
+  content: ""; position: absolute; right: -70px; top: 50%; width: 180px; height: 180px; transform: translateY(-50%);
+  border: 2px solid var(--pitch); border-radius: 50%; pointer-events: none;
+}
+.card::after { content: ""; position: absolute; right: 18px; top: 0; bottom: 0; width: 2px; background: var(--pitch); pointer-events: none; }
+.card > * { position: relative; z-index: 1; }
+.card-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.qnum { font-family: var(--font-display); font-weight: 900; font-size: 2.6rem; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.qnum small { font-size: 1rem; color: var(--muted); font-weight: 700; }
+.cat { font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; color: var(--muted); border: 1px solid var(--line); padding: 3px 9px; border-radius: 4px; }
+.question { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.45rem, 5vw, 1.8rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.pos-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.pos-tags span { font-size: .68rem; font-weight: 600; letter-spacing: .05em; background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 3px; }
+.tip { border-top: 1px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.tip p { margin: 0; }
+.btn { border-radius: 10px; padding: 11px 14px; font-weight: 600; font-size: .9rem; border: 1px solid var(--line); background: var(--bg); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.rate { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rate .btn[aria-pressed="true"].ok { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.rate .btn[aria-pressed="true"].train { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.stepper { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+.stepper .btn:last-child { justify-self: end; }
+.stepper .btn { min-width: 0; }
+.empty { color: var(--muted); text-align: center; padding: 30px 10px; }
+
+/* list */
+.group { display: flex; flex-direction: column; gap: 2px; }
+.group h2 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 1.05rem; margin: 10px 0 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.group h2 span { font-family: var(--font-body); font-size: .75rem; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 500; font-variant-numeric: tabular-nums; }
+.row { display: grid; grid-template-columns: 2.2rem 1fr .8rem; gap: 10px; align-items: start; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 2px; width: 100%; }
+.row:hover { background: var(--accent-soft); }
+.row .n { font-family: var(--font-display); font-weight: 700; color: var(--accent); font-size: 1.1rem; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.row .t { min-width: 0; font-size: .92rem; }
+.dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--line); margin-top: 6px; }
+.dot.ok { background: var(--accent); border-color: var(--accent); }
+.dot.train { background: var(--warn); border-color: var(--warn); }
+.legend { display: flex; gap: 14px; font-size: .75rem; color: var(--muted); flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { margin: 0; }
+
+/* after match */
+.after { display: flex; flex-direction: column; gap: 14px; }
+.after-intro { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; }
+.after-intro p { margin: 0; }
+.after-intro strong { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .05em; font-size: 1.05rem; display: block; margin-bottom: 4px; }
+.aq { display: grid; grid-template-columns: 2.4rem 1fr; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.aq .n { font-family: var(--font-display); font-weight: 900; font-size: 1.6rem; color: var(--accent); line-height: 1; }
+.aq p { margin: 0; min-width: 0; }
+.aq .q { font-weight: 600; }
+.aq .h { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.after-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.copybox { width: 100%; min-height: 9rem; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font: inherit; font-size: .85rem; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: .85rem; font-weight: 600; }
+footer { color: var(--muted); font-size: .75rem; text-align: center; padding-top: 10px; border-top: 1px solid var(--line); }
+.reset { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: .75rem; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div class="brand"><b>FLP</b><span id="t-brand">Performance</span></div>
+      <div class="lang" role="group" aria-label="Sprache / Idioma">
+        <button id="lang-de" type="button" aria-pressed="true">DE</button>
+        <button id="lang-pt" type="button" aria-pressed="false">PT</button>
+      </div>
+    </div>
+    <h1 id="t-title"></h1>
+    <p class="sub" id="t-sub"></p>
+  </header>
+
+  <section class="progress" aria-live="polite">
+    <div class="progress-row"><span id="t-progress"></span><strong id="p-count">0/50</strong></div>
+    <div class="segs" id="segs"></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button id="tab-train" role="tab" type="button" aria-selected="true"></button>
+    <button id="tab-list" role="tab" type="button" aria-selected="false"></button>
+    <button id="tab-after" role="tab" type="button" aria-selected="false"></button>
+  </nav>
+
+  <div class="filter" id="filter">
+    <span class="label" id="t-pos"></span>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <main id="view"></main>
+
+  <footer>
+    <p id="t-foot"></p>
+    <button class="reset" id="reset" type="button"></button>
+  </footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const POS = {
+    tw: { de: "TW", pt: "GOL", deL: "Torwart", ptL: "Goleiro" },
+    iv: { de: "IV", pt: "ZAG", deL: "Innenverteidiger", ptL: "Zagueiro" },
+    av: { de: "AV", pt: "LAT", deL: "Aussenverteidiger", ptL: "Lateral" },
+    zm: { de: "ZM", pt: "MEI", deL: "Mittelfeld", ptL: "Meio-campo" },
+    fl: { de: "FL", pt: "PON", deL: "Flügel", ptL: "Ponta" },
+    st: { de: "ST", pt: "ATA", deL: "Stürmer", ptL: "Atacante" }
+  };
+  const ALL = ["tw","iv","av","zm","fl","st"];
+  const FIELD = ["iv","av","zm","fl","st"];
+
+  const CATS = [
+    { de: "Wahrnehmung", pt: "Percepção" },
+    { de: "Mit Ball", pt: "Com bola" },
+    { de: "Ohne Ball", pt: "Sem bola" },
+    { de: "Gegen den Ball", pt: "Defendendo" },
+    { de: "Umschalten", pt: "Transição" }
+  ];
+
+  // [category, positions, DE question, DE hint, PT question, PT hint]
+  const Q = [
+    [0, ALL, "Wie oft schaust du über die Schulter, bevor der Ball zu dir kommt?",
+      "Ideal sind 2–3 Blicke in den Sekunden vor der Ballannahme. Dann weisst du schon, wohin du aufdrehst.",
+      "Quantas vezes você olha por cima do ombro antes de a bola chegar?",
+      "O ideal são 2 a 3 olhadas nos segundos antes do domínio. Assim você já sabe para onde vai girar."],
+    [0, ALL, "Wo steht dein nächster Gegenspieler, und von welcher Seite kommt der Druck?",
+      "Wer die Druckseite kennt, nimmt den Ball mit dem Fuss an, der weiter vom Gegner entfernt ist.",
+      "Onde está o adversário mais próximo e de que lado vem a pressão?",
+      "Quem conhece o lado da pressão domina a bola com o pé mais longe do adversário."],
+    [0, ["iv","av","zm"], "Welcher Mitspieler ist gerade frei, auch wenn er weit weg steht?",
+      "Den freien Mann auf der anderen Seite zu sehen ist oft wertvoller als der sichere Kurzpass.",
+      "Qual companheiro está livre agora, mesmo que esteja longe?",
+      "Enxergar o jogador livre do outro lado muitas vezes vale mais do que o passe curto seguro."],
+    [0, FIELD, "Wo ist der freie Raum: zwischen den Linien, hinter der Abwehr oder auf dem Flügel?",
+      "Zuerst den Raum sehen, dann den Mitspieler. Der Raum zeigt, wohin der Angriff gehen soll.",
+      "Onde está o espaço livre: entre as linhas, nas costas da defesa ou pela ponta?",
+      "Primeiro veja o espaço, depois o companheiro. O espaço mostra para onde o ataque deve ir."],
+    [0, ["zm","fl","st"], "Wie hoch steht die gegnerische Abwehrlinie?",
+      "Hohe Linie: Laufwege in die Tiefe. Tiefe Linie: Spiel zwischen die Linien und Abschlüsse aus der Distanz.",
+      "Quão alta está a linha defensiva adversária?",
+      "Linha alta: corridas em profundidade. Linha baixa: jogo entre as linhas e finalizações de fora da área."],
+    [0, ALL, "Welcher Gegenspieler ist müde, unsicher oder hat schon eine gelbe Karte?",
+      "Intelligente Spieler finden die schwächste Stelle beim Gegner und greifen dort immer wieder an.",
+      "Qual adversário está cansado, inseguro ou já tem cartão amarelo?",
+      "Jogadores inteligentes encontram o ponto mais fraco do adversário e atacam ali repetidamente."],
+    [0, ALL, "Wie viel Zeit hast du, wenn der Ball ankommt: eine Sekunde, zwei oder mehr?",
+      "Wer seine Zeit kennt, entscheidet richtig zwischen Direktspiel, Annahme und Aufdrehen.",
+      "Quanto tempo você tem quando a bola chega: um segundo, dois ou mais?",
+      "Quem sabe o tempo que tem escolhe certo entre jogar de primeira, dominar ou girar."],
+    [0, ["zm","fl","st"], "Wo steht der gegnerische Torwart?",
+      "Steht der Torwart weit vor dem Tor, lohnt sich ein Heber oder ein Schuss aus der Distanz.",
+      "Onde está posicionado o goleiro adversário?",
+      "Se o goleiro está adiantado, vale a pena tentar a cavadinha ou o chute de longe."],
+    [0, ["iv","av","zm"], "Wohin schaut der ballführende Gegner?",
+      "Augen und Hüfte des Gegners verraten oft den nächsten Pass. Antizipieren statt reagieren.",
+      "Para onde olha o adversário que está com a bola?",
+      "Os olhos e o quadril do adversário muitas vezes revelam o próximo passe. Antecipar em vez de reagir."],
+    [0, ["tw","iv"], "Wie steht deine Abwehr gerade, und wer muss jetzt etwas von dir hören?",
+      "Der Torwart sieht das ganze Feld. Kurze, klare Kommandos wie «Zeit!», «Mann!» oder «Raus!» steuern die Abwehr.",
+      "Como está posicionada sua defesa agora, e quem precisa ouvir algo de você?",
+      "O goleiro vê o campo inteiro. Comandos curtos e claros como «Tempo!», «Ladrão!» ou «Sobe!» organizam a defesa."],
+
+    [1, ALL, "Was ist dein erster Gedanke bei Ballbesitz: vorwärts, quer oder sichern?",
+      "Zuerst nach vorne schauen. Ist kein Weg frei, quer oder zurück spielen und neu aufbauen.",
+      "Qual é seu primeiro pensamento com a bola: para frente, para o lado ou segurar?",
+      "Primeiro olhe para frente. Se não houver caminho, jogue para o lado ou para trás e reconstrua."],
+    [1, ALL, "Mit welchem Fuss nimmst du den Ball an, damit du direkt weiterspielen kannst?",
+      "Offene Körperstellung und Annahme mit dem hinteren Fuss öffnen dir das ganze Spielfeld.",
+      "Com qual pé você domina a bola para poder seguir a jogada imediatamente?",
+      "Corpo aberto e domínio com o pé de trás abrem o campo inteiro para você."],
+    [1, ["av","fl","st"], "Wann ist ein Dribbling die richtige Entscheidung?",
+      "Im letzten Drittel im 1-gegen-1: ja. Im eigenen Drittel ohne Absicherung: fast nie.",
+      "Quando o drible é a decisão certa?",
+      "No último terço, no um contra um: sim. No seu próprio terço, sem cobertura: quase nunca."],
+    [1, ["iv","av","zm"], "Spielst du den Pass in den Fuss oder in den Lauf, und warum?",
+      "In den Fuss, wenn der Mitspieler eng gedeckt ist und den Ball sichern soll. In den Lauf, wenn vor ihm Raum ist.",
+      "Você passa a bola no pé ou na corrida do companheiro, e por quê?",
+      "No pé, quando o companheiro está marcado de perto e precisa proteger a bola. Na corrida, quando há espaço à frente dele."],
+    [1, ["iv","zm"], "Kann dein Pass eine Linie des Gegners überspielen?",
+      "Jeder Pass, der eine gegnerische Reihe überspielt, bringt das Team näher ans Tor. Linienbrechende Pässe sind Gold.",
+      "Seu passe consegue quebrar uma linha do adversário?",
+      "Cada passe que supera uma linha adversária aproxima o time do gol. Passes que quebram linhas valem ouro."],
+    [1, ALL, "Wann spielst du den Ball direkt?",
+      "Direkt, wenn der Druck gross ist und du vorher schon gesehen hast, wohin der Ball soll.",
+      "Quando você joga de primeira?",
+      "De primeira quando a pressão é grande e você já viu antes para onde a bola deve ir."],
+    [1, ALL, "Warum ist der Rückpass manchmal die klügste Entscheidung?",
+      "Ein Rückpass verlagert das Spiel, lockt den Gegner heraus und öffnet neue Räume. Er hat nichts mit Angst zu tun.",
+      "Por que o passe para trás às vezes é a decisão mais inteligente?",
+      "O passe para trás muda o jogo de lado, atrai o adversário e abre novos espaços. Não tem nada a ver com medo."],
+    [1, ["zm","fl","st"], "Schiessen oder abspielen: Wer hat die bessere Position?",
+      "Steht ein Mitspieler freier und näher am Tor, ist der Pass die intelligentere Entscheidung.",
+      "Chutar ou passar: quem está em melhor posição?",
+      "Se um companheiro está mais livre e mais perto do gol, o passe é a decisão mais inteligente."],
+    [1, ["iv","av","zm"], "Wie verlagerst du das Spiel, wenn eine Seite zu ist?",
+      "Mit ein, zwei schnellen Pässen oder einem langen Diagonalball auf die freie Seite, bevor der Gegner nachschiebt.",
+      "Como você inverte o jogo quando um lado está fechado?",
+      "Com um ou dois passes rápidos ou uma bola longa diagonal para o lado livre, antes que o adversário bascule."],
+    [1, ["tw"], "Kurz oder lang abspielen, und warum?",
+      "Kurz, wenn ein Verteidiger frei und offen steht. Lang, wenn der Gegner hoch presst und vorne Raum ist.",
+      "Sair jogando curto ou longo, e por quê?",
+      "Curto, quando um defensor está livre e de frente. Longo, quando o adversário pressiona alto e há espaço lá na frente."],
+
+    [2, ALL, "Wo musst du stehen, damit der Ballführende dich anspielen kann?",
+      "Raus aus dem Deckungsschatten des Gegners. Schaffe eine klare, freie Passlinie.",
+      "Onde você precisa estar para que o companheiro com a bola consiga te passar?",
+      "Saia da sombra do marcador. Crie uma linha de passe clara e livre."],
+    [2, ["zm","fl","st"], "Wann bietest du dich kurz an, wann läufst du in die Tiefe?",
+      "Kommt ein Mitspieler kurz, geht der andere tief. Gegenbewegungen schaffen Räume.",
+      "Quando você vem buscar curto e quando ataca a profundidade?",
+      "Se um companheiro vem curto, o outro ataca a profundidade. Movimentos opostos criam espaços."],
+    [2, ["fl","st"], "Wie schaffst du Raum für einen Mitspieler, ohne den Ball zu bekommen?",
+      "Ein Laufweg, der einen Verteidiger mitzieht, ist so wertvoll wie eine Vorlage.",
+      "Como você cria espaço para um companheiro sem receber a bola?",
+      "Uma corrida que arrasta um defensor vale tanto quanto uma assistência."],
+    [2, ALL, "Stehst du offen zum Spiel, sodass du Ball und Tor gleichzeitig siehst?",
+      "Körper seitlich zum Spielfeld: Du siehst mehr und kannst schneller aufdrehen.",
+      "Você está com o corpo aberto, vendo a bola e o gol ao mesmo tempo?",
+      "Corpo de lado para o campo: você enxerga mais e gira mais rápido."],
+    [2, ["fl","st"], "Wann startest du, damit du nicht im Abseits stehst?",
+      "Starte in dem Moment, in dem der Passgeber den Kopf hebt. Bis dahin auf einer Linie mit dem letzten Verteidiger bleiben.",
+      "Quando você arranca para não ficar impedido?",
+      "Arranque no momento em que o passador levanta a cabeça. Até lá, fique na linha do último defensor."],
+    [2, ALL, "Was machst du, nachdem du den Ball abgespielt hast?",
+      "Abspielen und sofort neu anbieten: Doppelpass, Hinterlaufen oder Freilaufen. Nicht stehen bleiben.",
+      "O que você faz depois de passar a bola?",
+      "Passe e se ofereça de novo na hora: tabela, ultrapassagem ou desmarque. Não fique parado."],
+    [2, ["av","fl"], "Wann hinterläufst du aussen, wann läufst du innen?",
+      "Bleibt der Flügelspieler aussen, läufst du innen (Underlap). Zieht er nach innen, hinterläufst du aussen (Overlap).",
+      "Quando você passa por fora e quando passa por dentro?",
+      "Se o ponta fica aberto, você passa por dentro. Se ele corta para dentro, você ultrapassa por fora."],
+    [2, ["zm","fl","st"], "Wohin läufst du bei einer Flanke: erster Pfosten, zweiter Pfosten oder Rückraum?",
+      "Räume aufteilen, nie zu zweit an den gleichen Ort. Einer besetzt immer den Rückraum.",
+      "Para onde você corre no cruzamento: primeiro pau, segundo pau ou entrada da área?",
+      "Dividam os espaços, nunca dois no mesmo lugar. Alguém sempre ocupa a entrada da área."],
+    [2, ["av","fl","st"], "Welche Breite und Tiefe gibst du dem Team?",
+      "Aussenspieler machen das Feld breit, Stürmer machen es tief. So entsteht in der Mitte Platz.",
+      "Que amplitude e profundidade você dá ao time?",
+      "Os jogadores de lado dão amplitude, o atacante dá profundidade. Assim abre espaço no meio."],
+    [2, ALL, "Was sagst du dem Mitspieler, der gleich den Ball bekommt?",
+      "«Zeit!», «Hintermann!», «Dreh!» Kurze Infos helfen dem Mitspieler, der nicht alles sehen kann.",
+      "O que você fala para o companheiro que vai receber a bola?",
+      "«Tempo!», «Ladrão!», «Vira!» Informações curtas ajudam quem não consegue ver tudo."],
+
+    [3, ["iv","av","zm"], "Wo stehst du, wenn der Gegner den Ball hat?",
+      "Grundregel: zwischen Gegenspieler und eigenem Tor, mit Sicht auf Ball und Gegner.",
+      "Onde você se posiciona quando o adversário está com a bola?",
+      "Regra básica: entre o adversário e o seu gol, vendo a bola e o adversário."],
+    [3, FIELD, "Wann attackierst du, wann wartest du?",
+      "Attacke bei schlechter Ballannahme, bei einem Rückpass oder wenn der Gegner mit dem Rücken zum Tor steht. Sonst stellen und warten.",
+      "Quando você dá o bote e quando espera?",
+      "Dê o bote no domínio ruim, no passe para trás ou quando o adversário está de costas. Senão, feche e espere."],
+    [3, ["iv","av","zm"], "In welche Richtung lenkst du den Gegner?",
+      "Zur Seitenlinie oder auf seinen schwachen Fuss, also dorthin, wo deine Mitspieler helfen können.",
+      "Para qual lado você direciona o adversário?",
+      "Para a linha lateral ou para o pé mais fraco dele, onde seus companheiros podem ajudar."],
+    [3, ["iv","zm"], "Wer sichert dich ab, wenn du attackierst?",
+      "Nur der erste Spieler attackiert, der zweite sichert dahinter ab. Ohne Absicherung entsteht ein Loch.",
+      "Quem faz a cobertura quando você sai para pressionar?",
+      "Só o primeiro jogador pressiona; o segundo faz a cobertura atrás. Sem cobertura, abre um buraco."],
+    [3, ["iv","av"], "Wie eng deckst du deinen Gegenspieler?",
+      "Je näher am eigenen Tor und am Ball, desto enger. Weit weg vom Ball rückst du Richtung Mitte ein.",
+      "Quão perto você marca o seu adversário?",
+      "Quanto mais perto do seu gol e da bola, mais perto. Longe da bola, você fecha em direção ao meio."],
+    [3, FIELD, "Wie schliesst ihr als Team die Mitte?",
+      "Kurze Abstände halten (etwa 10–15 m) und gemeinsam zur Ballseite verschieben.",
+      "Como vocês fecham o meio como equipe?",
+      "Mantenham distâncias curtas (cerca de 10 a 15 m) e basculem juntos para o lado da bola."],
+    [3, ["tw","iv","av"], "Wann rückt ihr als Abwehr heraus?",
+      "Sobald der Ball zurückgespielt wird oder kein Druck auf dem Ball ist. Alle gemeinsam, auf ein Kommando.",
+      "Quando a defesa sobe a linha?",
+      "Quando a bola é jogada para trás ou quando não há pressão na bola. Todos juntos, com um comando."],
+    [3, ["tw","iv","av"], "Wie verteidigst du eine Flanke?",
+      "Zuerst Gegenspieler und Raum vor dem Tor kontrollieren, dann zum Ball. Nie nur dem Ball nachschauen.",
+      "Como você defende um cruzamento?",
+      "Primeiro controle o adversário e o espaço em frente ao gol, depois a bola. Nunca fique só olhando a bola."],
+    [3, ["tw"], "Wann verlässt du als Torwart die Linie?",
+      "Bei Bällen hinter die Abwehr oder Flanken, die du sicher erreichst. Früh entscheiden und laut rufen: «Torwart!»",
+      "Quando você sai do gol como goleiro?",
+      "Em bolas nas costas da defesa ou cruzamentos que você alcança com segurança. Decida cedo e grite alto: «Goleiro!»"],
+    [3, ["fl","st"], "Wie presst du als Stürmer den Torwart oder die Innenverteidiger an?",
+      "Im Bogen anlaufen und dabei mit dem Körper einen Passweg zustellen (Deckungsschatten).",
+      "Como você pressiona o goleiro ou os zagueiros como atacante?",
+      "Corra em curva e, com o corpo, feche uma linha de passe (sombra de marcação)."],
+
+    [4, ALL, "Was machst du in den ersten fünf Sekunden nach Ballverlust?",
+      "Sofort Gegenpressing am Ball oder schnell hinter den Ball zurück. Nie stehen bleiben und ärgern.",
+      "O que você faz nos primeiros cinco segundos depois de perder a bola?",
+      "Pressão imediata na bola ou volte rápido para trás da linha da bola. Nunca fique parado reclamando."],
+    [4, ALL, "Was machst du in den ersten Sekunden nach Ballgewinn?",
+      "Erster Blick nach vorne: Ist ein schneller Konter möglich? Wenn nicht, den Ball sichern.",
+      "O que você faz nos primeiros segundos depois de recuperar a bola?",
+      "Primeira olhada para frente: dá para contra-atacar rápido? Se não, proteja a bola."],
+    [4, ["zm","fl","st"], "Wann lohnt sich ein schneller Konter und wann nicht?",
+      "Konter, wenn der Gegner unsortiert ist und vorne Räume offen sind. Ist er geordnet, Ball halten und aufbauen.",
+      "Quando vale a pena o contra-ataque rápido e quando não?",
+      "Contra-ataque quando o adversário está desorganizado e há espaço na frente. Se ele está organizado, segure a bola e construa."],
+    [4, ["zm","fl","st"], "Welcher Laufweg macht den Konter gefährlich?",
+      "Breite Läufe ziehen die Verteidiger auseinander: einer zentral, zwei über die Seiten.",
+      "Qual corrida torna o contra-ataque perigoso?",
+      "Corridas abertas afastam os defensores: um pelo meio, dois pelos lados."],
+    [4, ["av","zm"], "Wer muss nach Ballverlust zuerst absichern?",
+      "Der Spieler, der am nächsten zum eigenen Tor steht, sichert zentral. Ein taktisches Foul ist nur die letzte Lösung.",
+      "Quem precisa fazer a cobertura primeiro depois da perda da bola?",
+      "O jogador mais próximo do próprio gol fecha o meio. A falta tática é só a última solução."],
+    [4, ["tw"], "Wie schnell spielst du als Torwart nach einem gefangenen Ball ab?",
+      "Nach dem Fangen sofort hochschauen. Ein schneller Abwurf auf den freien Aussenspieler startet den Konter.",
+      "Com que rapidez você repõe a bola como goleiro depois de uma defesa?",
+      "Depois de segurar, levante a cabeça na hora. Uma reposição rápida para o lateral livre inicia o contra-ataque."],
+    [4, ALL, "Was machst du direkt nach einem eigenen Fehler?",
+      "Die nächste Aktion zählt. Intelligente Spieler reagieren sofort, statt den Kopf hängen zu lassen.",
+      "O que você faz logo depois de cometer um erro?",
+      "A próxima ação é a que conta. Jogadores inteligentes reagem na hora em vez de baixar a cabeça."],
+    [4, ALL, "Was ändert sich, wenn ihr führt oder zurückliegt?",
+      "Führung: Ball halten, wenig Risiko. Rückstand: mehr Tempo, mehr Spieler im Strafraum, höheres Pressing.",
+      "O que muda quando vocês estão ganhando ou perdendo?",
+      "Ganhando: segurar a bola, pouco risco. Perdendo: mais velocidade, mais jogadores na área, pressão mais alta."],
+    [4, ALL, "Was hat der Gegner in der ersten Halbzeit immer wieder gemacht?",
+      "Muster erkennen, zum Beispiel lange Bälle immer auf die gleiche Seite, und in der Pause darüber sprechen.",
+      "O que o adversário fez repetidamente no primeiro tempo?",
+      "Reconheça padrões, por exemplo bolas longas sempre no mesmo lado, e converse sobre isso no intervalo."],
+    [4, ALL, "Was würdest du beim nächsten Spiel anders machen?",
+      "Eine Situation konkret beschreiben und eine bessere Lösung finden. So lernt das Gehirn für das nächste Spiel.",
+      "O que você faria diferente no próximo jogo?",
+      "Descreva uma situação concreta e encontre uma solução melhor. É assim que o cérebro aprende para o próximo jogo."]
+  ];
+
+  const T = {
+    de: {
+      title: "50 Fragen zur <em>Spielintelligenz</em>",
+      sub: "Eine Frage pro Training. Erst nachdenken, dann die Denkhilfe lesen. So lernt dein Kopf, das Spiel schneller zu lesen.",
+      progress: "Fragen, die du sicher beantworten kannst",
+      tabTrain: "Training", tabList: "Alle 50", tabAfter: "Nach dem Spiel",
+      pos: "Position", all: "Alle",
+      question: "Frage", showTip: "Denkhilfe zeigen", hideTip: "Denkhilfe ausblenden", tipLabel: "Denkhilfe",
+      ok: "Kann ich", train: "Noch üben", prev: "Zurück", next: "Weiter", random: "Zufall",
+      empty: "Keine Fragen für diese Position.",
+      legendOk: "Kann ich", legendTrain: "Noch üben", legendOpen: "Offen",
+      afterTitle: "Für Eltern: 3 Fragen auf dem Heimweg",
+      afterText: "Nicht bewerten, nur fragen und zuhören. Das Kind soll selbst erzählen, was es gesehen und entschieden hat.",
+      shuffle: "Neue Fragen", copy: "Text kopieren", copied: "Kopiert",
+      copyFail: "Kopieren nicht möglich. Text unten markieren und kopieren.",
+      copyHead: "3 Fragen nach dem Spiel (FLP Performance)",
+      foot: "FLP Performance · Positionsspezifisches Training. Dein Fortschritt bleibt nur auf diesem Gerät gespeichert.",
+      reset: "Fortschritt zurücksetzen", resetConfirm: "Nochmals tippen zum Bestätigen", resetDone: "Fortschritt gelöscht"
+    },
+    pt: {
+      title: "50 perguntas para a <em>inteligência de jogo</em>",
+      sub: "Uma pergunta por treino. Primeiro pense, depois leia a dica. Assim a cabeça aprende a ler o jogo mais rápido.",
+      progress: "Perguntas que você já responde com segurança",
+      tabTrain: "Treino", tabList: "Todas as 50", tabAfter: "Pós-jogo",
+      pos: "Posição", all: "Todas",
+      question: "Pergunta", showTip: "Mostrar dica", hideTip: "Esconder dica", tipLabel: "Dica",
+      ok: "Já sei", train: "Treinar mais", prev: "Voltar", next: "Próxima", random: "Sortear",
+      empty: "Nenhuma pergunta para esta posição.",
+      legendOk: "Já sei", legendTrain: "Treinar mais", legendOpen: "Em aberto",
+      afterTitle: "Para os pais: 3 perguntas no caminho de casa",
+      afterText: "Não avalie, apenas pergunte e escute. Deixe a criança contar o que viu e o que decidiu.",
+      shuffle: "Novas perguntas", copy: "Copiar texto", copied: "Copiado",
+      copyFail: "Não foi possível copiar. Selecione o texto abaixo e copie.",
+      copyHead: "3 perguntas depois do jogo (FLP Performance)",
+      foot: "FLP Performance · Treino específico por posição. Seu progresso fica salvo apenas neste aparelho.",
+      reset: "Zerar progresso", resetConfirm: "Toque de novo para confirmar", resetDone: "Progresso apagado"
+    }
+  };
+
+  // ---------- state ----------
+  const KEY = "flp-spielintelligenz-v1";
+  let S = { lang: "de", pos: "all", idx: 0, view: "train", status: {}, tip: false, after: [] };
+  try { const saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) S = Object.assign(S, saved, { tip: false }); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ lang: S.lang, pos: S.pos, idx: S.idx, view: S.view, status: S.status, after: S.after })); } catch (e) {} }
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const pad = (n) => String(n).padStart(2, "0");
+  const t = () => T[S.lang];
+  const qText = (i) => S.lang === "de" ? Q[i][2] : Q[i][4];
+  const qTip = (i) => S.lang === "de" ? Q[i][3] : Q[i][5];
+  const catName = (c) => CATS[c][S.lang];
+  const visible = () => Q.map((_, i) => i).filter((i) => S.pos === "all" || Q[i][1].includes(S.pos));
+
+  function toast(msg) {
+    const el = $("toast"); el.textContent = msg; el.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800);
+  }
+
+  // ---------- render ----------
+  function renderStatic() {
+    document.documentElement.lang = S.lang === "de" ? "de" : "pt-BR";
+    $("lang-de").setAttribute("aria-pressed", S.lang === "de");
+    $("lang-pt").setAttribute("aria-pressed", S.lang === "pt");
+    $("t-title").innerHTML = t().title;
+    $("t-sub").textContent = t().sub;
+    $("t-progress").textContent = t().progress;
+    $("tab-train").textContent = t().tabTrain;
+    $("tab-list").textContent = t().tabList;
+    $("tab-after").textContent = t().tabAfter;
+    ["train", "list", "after"].forEach((v) => $("tab-" + v).setAttribute("aria-selected", S.view === v));
+    $("t-pos").textContent = t().pos;
+    $("t-foot").textContent = t().foot;
+    $("reset").textContent = t().reset;
+    $("filter").hidden = S.view === "after";
+
+    const chips = [["all", t().all]].concat(ALL.map((p) => [p, POS[p][S.lang]]));
+    $("chips").innerHTML = chips.map(([k, l]) => {
+      const title = k === "all" ? "" : ` title="${esc(S.lang === "de" ? POS[k].deL : POS[k].ptL)}"`;
+      return `<button class="chip" type="button" data-pos="${k}" aria-pressed="${S.pos === k}"${title}>${l}</button>`;
+    }).join("");
+  }
+
+  function renderProgress() {
+    const ok = Object.values(S.status).filter((v) => v === "ok").length;
+    $("p-count").textContent = ok + "/50";
+    $("segs").innerHTML = CATS.map((c, ci) => {
+      const done = Q.filter((q, i) => q[0] === ci && S.status[i] === "ok").length;
+      return `<div class="seg"><div class="seg-bar"><i style="width:${done * 10}%"></i></div><span title="${done}/10">${esc(c[S.lang])}</span></div>`;
+    }).join("");
+  }
+
+  function posTags(i) {
+    const ps = Q[i][1];
+    if (ps.length === ALL.length) return `<span>${S.lang === "de" ? "Alle Positionen" : "Todas as posições"}</span>`;
+    return ps.map((p) => `<span title="${esc(S.lang === "de" ? POS[p].deL : POS[p].ptL)}">${POS[p][S.lang]}</span>`).join("");
+  }
+
+  function renderTrain() {
+    const list = visible();
+    if (!list.length) return `<p class="empty">${t().empty}</p>`;
+    if (!list.includes(S.idx)) S.idx = list[0];
+    const i = S.idx, st = S.status[i];
+    const pos = list.indexOf(i) + 1;
+    return `
+      <article class="card">
+        <div class="card-meta">
+          <div class="qnum">${pad(i + 1)}<small> / 50</small></div>
+          <span class="cat">${esc(catName(Q[i][0]))}</span>
+        </div>
+        <h2 class="question">${esc(qText(i))}</h2>
+        <div class="pos-tags">${posTags(i)}</div>
+        <button class="btn${S.tip ? "" : " primary"}" type="button" id="tip-btn" aria-expanded="${S.tip}">${S.tip ? t().hideTip : t().showTip}</button>
+        <div class="tip" ${S.tip ? "" : "hidden"}>
+          <span class="label">${t().tipLabel}</span>
+          <p>${esc(qTip(i))}</p>
+        </div>
+        <div class="rate">
+          <button class="btn ok" type="button" data-rate="ok" aria-pressed="${st === "ok"}">${t().ok}</button>
+          <button class="btn train" type="button" data-rate="train" aria-pressed="${st === "train"}">${t().train}</button>
+        </div>
+      </article>
+      <div class="stepper" style="margin-top:12px">
+        <button class="btn" type="button" data-step="-1">← ${t().prev}</button>
+        <button class="btn" type="button" data-step="rand">${t().random}</button>
+        <button class="btn" type="button" data-step="1">${t().next} →</button>
+      </div>
+      <p class="label" style="text-align:center;margin-top:10px">${pos} / ${list.length}</p>`;
+  }
+
+  function renderList() {
+    const list = visible();
+    if (!list.length) return `<p class="empty">${t().empty}</p>`;
+    const legend = `<div class="legend"><span><i class="dot ok"></i>${t().legendOk}</span><span><i class="dot train"></i>${t().legendTrain}</span><span><i class="dot"></i>${t().legendOpen}</span></div>`;
+    return legend + CATS.map((c, ci) => {
+      const rows = list.filter((i) => Q[i][0] === ci);
+      if (!rows.length) return "";
+      const done = rows.filter((i) => S.status[i] === "ok").length;
+      return `<section class="group"><h2>${esc(c[S.lang])}<span>${done}/${rows.length}</span></h2>` +
+        rows.map((i) => `<button class="row" type="button" data-open="${i}"><span class="n">${pad(i + 1)}</span><span class="t">${esc(qText(i))}</span><i class="dot ${S.status[i] || ""}"></i></button>`).join("") +
+        `</section>`;
+    }).join("");
+  }
+
+  function pickAfter() {
+    // one perception/decision question, one off-ball/defending question, and always the reflection question (50)
+    const a = Q.map((_, i) => i).filter((i) => Q[i][0] <= 1 && Q[i][1].length > 1);
+    const b = Q.map((_, i) => i).filter((i) => (Q[i][0] === 2 || Q[i][0] === 3) && Q[i][1].length > 1);
+    const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    S.after = [r(a), r(b), 49];
+  }
+
+  function afterText() {
+    return t().copyHead + "\n\n" + S.after.map((i, k) => `${k + 1}. ${qText(i)}`).join("\n");
+  }
+
+  function renderAfter() {
+    if (!Array.isArray(S.after) || S.after.length !== 3) pickAfter();
+    return `<div class="after">
+      <div class="after-intro"><strong>${t().afterTitle}</strong><p>${t().afterText}</p></div>
+      ${S.after.map((i, k) => `<div class="aq"><span class="n">${k + 1}</span><p><span class="q">${esc(qText(i))}</span><br><span class="h">${esc(qTip(i))}</span></p></div>`).join("")}
+      <div class="after-actions">
+        <button class="btn" type="button" id="shuffle">${t().shuffle}</button>
+        <button class="btn primary" type="button" id="copy">${t().copy}</button>
+      </div>
+      <textarea class="copybox" id="copybox" readonly hidden></textarea>
+    </div>`;
+  }
+
+  function render() {
+    renderStatic();
+    renderProgress();
+    $("view").innerHTML = S.view === "train" ? renderTrain() : S.view === "list" ? renderList() : renderAfter();
+    save();
+  }
+
+  // ---------- events ----------
+  $("lang-de").onclick = () => { S.lang = "de"; render(); };
+  $("lang-pt").onclick = () => { S.lang = "pt"; render(); };
+  ["train", "list", "after"].forEach((v) => { $("tab-" + v).onclick = () => { S.view = v; S.tip = false; render(); }; });
+  $("chips").onclick = (e) => { const b = e.target.closest("[data-pos]"); if (!b) return; S.pos = b.dataset.pos; S.tip = false; render(); };
+
+  let resetArmed = false;
+  $("reset").onclick = () => {
+    if (!resetArmed) { resetArmed = true; $("reset").textContent = t().resetConfirm; setTimeout(() => { resetArmed = false; $("reset").textContent = t().reset; }, 3000); return; }
+    resetArmed = false; S.status = {}; render(); toast(t().resetDone);
+  };
+
+  $("view").onclick = (e) => {
+    const el = e.target.closest("button"); if (!el) return;
+    if (el.id === "tip-btn") { S.tip = !S.tip; render(); return; }
+    if (el.dataset.rate) { const r = el.dataset.rate; S.status[S.idx] === r ? delete S.status[S.idx] : (S.status[S.idx] = r); render(); return; }
+    if (el.dataset.step) {
+      const list = visible(); let p = list.indexOf(S.idx);
+      if (el.dataset.step === "rand") {
+        const open = list.filter((i) => S.status[i] !== "ok" && i !== S.idx);
+        const pool = open.length ? open : list.filter((i) => i !== S.idx);
+        if (pool.length) S.idx = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        p = (p + Number(el.dataset.step) + list.length) % list.length; S.idx = list[p];
+      }
+      S.tip = false; render(); return;
+    }
+    if (el.dataset.open) { S.idx = Number(el.dataset.open); S.view = "train"; S.tip = false; render(); window.scrollTo({ top: 0 }); return; }
+    if (el.id === "shuffle") { pickAfter(); render(); return; }
+    if (el.id === "copy") {
+      const text = afterText();
+      const fallback = () => { const box = $("copybox"); box.value = text; box.hidden = false; box.focus(); box.select(); toast(t().copyFail); };
+      try {
+        navigator.clipboard.writeText(text).then(() => toast(t().copied), fallback);
+      } catch (err) { fallback(); }
+    }
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (S.view !== "train" || e.target.tagName === "TEXTAREA") return;
+    if (e.key === "ArrowRight") $("view").querySelector('[data-step="1"]')?.click();
+    if (e.key === "ArrowLeft") $("view").querySelector('[data-step="-1"]')?.click();
+  });
+
+  render();
+})();
+</script>
