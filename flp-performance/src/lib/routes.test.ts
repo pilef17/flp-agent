@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { homePathFor, isProtectedPath, navFor, safeNextPath } from "./routes";
+import { homePathFor, isProtectedPath, isWochenfrageHost, navFor, safeNextPath } from "./routes";
 
 describe("safeNextPath", () => {
   it("erlaubt interne Pfade", () => {
@@ -28,6 +28,9 @@ describe("Rollen-Navigation", () => {
     expect(navFor(["parent"]).some((i) => i.href.startsWith("/admin"))).toBe(false);
     expect(navFor(["parent"]).some((i) => i.href === "/entwicklung")).toBe(true);
     expect(navFor(["coach"]).some((i) => i.href === "/admin/beurteilungen")).toBe(true);
+    expect(navFor(["coach"]).some((i) => i.href === "/admin/wochenfrage" && !i.desktopOnly)).toBe(true);
+    expect(navFor(["admin"]).some((i) => i.href === "/admin/wochenfrage" && !i.desktopOnly)).toBe(true);
+    expect(navFor(["parent"]).some((i) => i.href === "/admin/wochenfrage")).toBe(false);
     expect(navFor(["coach"]).some((i) => i.href === "/admin/produkte")).toBe(false);
     expect(navFor(["admin"]).some((i) => i.href === "/admin/produkte")).toBe(true);
     // Mobile Leiste hat höchstens 5 Einträge
@@ -50,5 +53,19 @@ describe("Rollen-Navigation", () => {
     expect(isProtectedPath("/programme/flp-training/inhalt")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
     expect(isProtectedPath("/administration-fake")).toBe(false);
+  });
+});
+
+describe("Wochenfrage", () => {
+  it("ist öffentlich, das Trainer-Panel nicht", () => {
+    expect(isProtectedPath("/wochenfrage")).toBe(false);
+    expect(isProtectedPath("/admin/wochenfrage")).toBe(true);
+  });
+  it("erkennt die eigene Domain unabhängig von Schreibweise und Port", () => {
+    expect(isWochenfrageHost("frage.flp.ch", "frage.flp.ch")).toBe(true);
+    expect(isWochenfrageHost("Frage.FLP.ch:443", "https://frage.flp.ch/")).toBe(true);
+    expect(isWochenfrageHost("app.flp.ch", "frage.flp.ch")).toBe(false);
+    expect(isWochenfrageHost("frage.flp.ch", undefined)).toBe(false);
+    expect(isWochenfrageHost(null, "frage.flp.ch")).toBe(false);
   });
 });

@@ -439,6 +439,45 @@ reset role;
 select tests.denied($$update public.products set price_cents = 10 where slug = 'flp-training'$$, 'Preis unter CHF 0.50 abgelehnt');
 
 -- ---------------------------------------------------------------------------
+-- Wochenfrage: öffentlich nur über den Server, lesen nur Admin/Coach
+-- ---------------------------------------------------------------------------
+set role service_role;
+insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'Hast du nach dem Fehler wieder den Ball gefordert?', 'Lio', 'lio', 4);
+insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'Hast du nach dem Fehler wieder den Ball gefordert?', 'Mia', 'mia', null);
+reset role;
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Lio', 'lio', 3)$$, 'Wochenfrage: nur eine Antwort pro Athlet und Woche');
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Tim', 'tim', 9)$$, 'Wochenfrage: Bewertung nur 1–5');
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating, athlete_age, team)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Tom', 'tom', 3, 99, 'FC Test')$$, 'Wochenfrage: Alter nur 4–30');
+
+select tests.anon();
+select tests.denied($$select 1 from public.weekly_answers$$, 'Wochenfrage: anonym nicht lesbar');
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Hacker', 'hacker', 5)$$, 'Wochenfrage: anonym kein direktes Schreiben');
+select tests.logout();
+
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.weekly_answers), 0, 'Wochenfrage: Eltern sehen keine Antworten');
+select tests.denied($$insert into public.weekly_answers (week_start, theme, question_key, question, athlete_name, athlete_key, rating)
+  values ('2026-11-19', 'mentalitaet', 'mentalitaet-1', 'x', 'Fake', 'fake', 5)$$, 'Wochenfrage: Eltern kein direktes Schreiben');
+select tests.denied($$delete from public.weekly_answers$$, 'Wochenfrage: Eltern können nicht löschen');
+select tests.logout();
+
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.weekly_answers), 2, 'Wochenfrage: Coach sieht alle Antworten');
+select tests.denied($$update public.weekly_answers set rating = 1$$, 'Wochenfrage: Coach kann Antworten nicht verändern');
+select tests.allowed($$delete from public.weekly_answers where athlete_key = 'mia'$$, 'Wochenfrage: Coach kann Spam löschen');
+select tests.logout();
+
+select tests.login('00000000-0000-0000-0000-00000000000a');
+select tests.eq((select count(*) from public.weekly_answers), 1, 'Wochenfrage: Admin sieht Antworten');
+select tests.logout();
+
+-- ---------------------------------------------------------------------------
 select format('%s %s%s', case when passed then 'ok  ' else 'FAIL' end, name,
   case when passed then '' else ' – ' || coalesce(detail, '') end)
 from tests.results order by id;

@@ -60,6 +60,10 @@ export default async function AdminDashboard() {
         <Stat label="Aktive Programme" value={products.count ?? 0} hint="Im Shop sichtbar" />
         {isAdmin && <Stat label="Datenschutz" value={privacyOpen?.count ?? 0} hint="Offene Anträge" />}
       </div>
+      <nav aria-label="Schnellzugriff" className="mt-4 flex flex-wrap gap-2">
+        <ButtonLink href="/admin/wochenfrage" variant="secondary">Wochenfrage: Antworten</ButtonLink>
+        <ButtonLink href="/admin/uebungen" variant="secondary">Übungen</ButtonLink>
+      </nav>
 
       {isAdmin && (
         <Card className="mt-6">

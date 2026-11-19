@@ -31,7 +31,8 @@ export async function mailLink(to, after) {
 
 /** Startet eine Suite mit eigenem Browser und zählt Fehler. */
 export async function runSuite(name, body) {
-  const browser = await chromium.launch();
+  // E2E_CHROMIUM: optionaler Pfad zu einem vorinstallierten Chromium
+  const browser = await chromium.launch(process.env.E2E_CHROMIUM ? { executablePath: process.env.E2E_CHROMIUM } : {});
   const outDir = new URL("./.run/screenshots/", import.meta.url).pathname;
   fs.mkdirSync(outDir, { recursive: true });
   let failures = 0;
