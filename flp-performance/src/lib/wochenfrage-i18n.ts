@@ -159,7 +159,7 @@ export const TEXT: Record<Lang, Texts> = {
     ageLabel: "Edad",
     agePlaceholder: "p. ej. 11",
     teamLabel: "Equipo / Club",
-    teamPlaceholder: "p. ej. FC Ejemplo D-Junioren",
+    teamPlaceholder: "p. ej. FC Ejemplo Sub-11",
     scaleQuestion: "¿Cuántas veces lo lograste?",
     send: "Enviar respuesta",
     sending: "Enviando …",
@@ -368,15 +368,15 @@ const WEEKS: Record<Exclude<Lang, "de">, WeekTexts[]> = {
     },
     {
       focus: "Definición",
-      question: "¿Miraste dónde estaba el portero antes de chutar?",
+      question: "¿Miraste dónde estaba el portero antes de tirar?",
       parentNote: "Una mirada antes del tiro convierte la suerte en una decisión.",
       task: "Mira al portero un momento antes de cada tiro.",
     },
     {
       focus: "Orientar al rival",
-      question: "¿Llevaste a tu rival hacia la banda?",
+      question: "¿Llevaste a tu rival hacia la línea de banda?",
       parentNote: "Quien orienta al rival controla el juego, incluso sin balón.",
-      task: "Lleva a tu rival hacia la banda.",
+      task: "Lleva a tu rival hacia la línea de banda.",
     },
   ],
 };
