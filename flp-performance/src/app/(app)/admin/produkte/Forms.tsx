@@ -5,7 +5,7 @@ import { Field, TextArea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/ui/Feedback";
 import type { FormState } from "@/lib/validation";
-import { addArticle, addExerciseItem } from "./actions";
+import { addArticle, addExerciseItem, importPrograms } from "./actions";
 
 type Action = (state: FormState, formData: FormData) => Promise<FormState>;
 
@@ -64,6 +64,41 @@ export function ExerciseItemForm({ productId, exercises }: { productId: string; 
         {state.errors?.exerciseId && <p className="text-xs text-danger">{state.errors.exerciseId}</p>}
       </div>
       <SubmitButton variant="secondary">Übung hinzufügen</SubmitButton>
+    </form>
+  );
+}
+
+export function ImportProgramsForm() {
+  const [state, formAction] = useActionState(importPrograms, {});
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      <FormMessage state={state} />
+      <div className="space-y-1.5">
+        <label htmlFor="import-file" className="block text-xs font-medium uppercase tracking-[0.12em] text-mute">
+          JSON-Datei
+        </label>
+        <input
+          id="import-file"
+          name="file"
+          type="file"
+          accept="application/json,.json"
+          className="field file:mr-3 file:rounded-card file:border-0 file:bg-graphite-2 file:px-3 file:py-1.5 file:text-paper"
+          aria-invalid={state.errors?.file ? true : undefined}
+          aria-describedby={state.errors?.file ? "import-file-err" : "import-file-hint"}
+        />
+        {state.errors?.file ? (
+          <p id="import-file-err" className="text-xs text-danger">
+            {state.errors.file}
+          </p>
+        ) : (
+          <p id="import-file-hint" className="text-xs text-mute">
+            Gleicher Slug: Texte und Einheiten werden ersetzt, Preis und Sichtbarkeit bleiben.
+          </p>
+        )}
+      </div>
+      <SubmitButton variant="secondary" pendingLabel="Wird importiert …">
+        Programme importieren
+      </SubmitButton>
     </form>
   );
 }

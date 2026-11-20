@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { parseChf, slugify } from "@/lib/commerce";
 import { isMediaPathFor } from "@/lib/exercises";
 import { articleSchema, fieldErrors, keepValues, productSchema, type FormState } from "@/lib/validation";
+import { programImportSchema } from "@/lib/programs";
 
 const FIELDS = ["title", "slug", "summary", "description", "price", "accessDays", "position"];
 
@@ -181,4 +182,43 @@ export async function moveContentItem(formData: FormData) {
   [order[i], order[j]] = [order[j], order[i]];
   await Promise.all(order.map((id, position) => supabase.from("product_content").update({ position }).eq("id", id)));
   revalidatePath(`/admin/produkte/${parsed.data.productId}`);
+}
+
+const MAX_IMPORT_BYTES = 900_000;
+
+/** Importiert Positionsprogramme aus einer JSON-Datei (Format: src/lib/programs.ts). */
+export async function importPrograms(_: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { errors: { file: "Bitte eine JSON-Datei wählen." } };
+  if (file.size > MAX_IMPORT_BYTES) return { errors: { file: "Die Datei ist zu gross (max. 900 KB)." } };
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await file.text());
+  } catch {
+    return { errors: { file: "Die Datei ist kein gültiges JSON." } };
+  }
+  const parsed = programImportSchema.safeParse(raw);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { errors: { file: `Ungültiges Format bei «${issue.path.join(".")}»: ${issue.message}` } };
+  }
+
+  const supabase = await createClient();
+  const done: string[] = [];
+  for (const product of parsed.data.products) {
+    const { error } = await supabase.rpc("import_program_product", { p: product });
+    if (error) {
+      const prefix = done.length ? `${done.length} Programme importiert, dann Fehler` : "Import fehlgeschlagen";
+      return { message: `${prefix} bei «${product.title}». Bitte erneut versuchen.` };
+    }
+    done.push(product.title);
+  }
+  revalidatePath("/admin/produkte");
+  revalidatePath("/programme", "layout");
+  return {
+    ok: true,
+    message: `${done.length} Programme importiert. Neue Programme sind inaktiv: Preis prüfen und danach im Shop aktivieren.`,
+  };
 }

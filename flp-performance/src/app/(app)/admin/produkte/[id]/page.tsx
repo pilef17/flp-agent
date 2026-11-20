@@ -13,7 +13,7 @@ import { deleteContentItem, moveContentItem, registerCover, registerProgramVideo
 
 export const metadata: Metadata = { title: "Programm bearbeiten" };
 
-const KIND = { article: "Lektion", exercise: "Übung", video: "Video" } as const;
+const KIND = { article: "Lektion", exercise: "Übung", video: "Video", session: "Einheit" } as const;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 // Bucket «program-media» erlaubt nur MP4 und WebM
 const PROGRAM_VIDEO_TYPES = ["video/mp4", "video/webm"] as const;

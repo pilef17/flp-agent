@@ -13,7 +13,7 @@ import { startCheckout } from "../actions";
 
 export const metadata: Metadata = { title: "Programm-Details" };
 
-const KIND_LABEL = { exercise: "Übung", article: "Lektion", video: "Video" } as const;
+const KIND_LABEL = { exercise: "Übung", article: "Lektion", video: "Video", session: "Einheit" } as const;
 
 export default async function ProgramDetailPage({
   params,

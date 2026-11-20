@@ -7,16 +7,35 @@ import { signedUrls } from "@/lib/data/media";
 import { SLUG_PATTERN } from "@/lib/commerce";
 import { PageHeader } from "@/components/ui/Feedback";
 import { Card } from "@/components/ui/Card";
+import { SessionView } from "@/components/programs/SessionView";
+import { parseSessionData } from "@/lib/programs";
 
 export const metadata: Metadata = { title: "Programm" };
 
+const KIND_LABEL = { article: "Lektion", video: "Video", exercise: "Übung", session: "Einheit" } as const;
+
+function SessionContent({ value }: { value: unknown }) {
+  const data = parseSessionData(value);
+  if (!data) return <p className="mt-3 text-sm text-mute">Diese Einheit kann gerade nicht angezeigt werden.</p>;
+  return (
+    <details className="group mt-2">
+      <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-gold">
+        <span className="group-open:hidden">Ablauf anzeigen</span>
+        <span className="hidden group-open:inline">Ablauf ausblenden</span>
+      </summary>
+      <SessionView data={data} />
+    </details>
+  );
+}
+
 type Item = {
   id: string;
-  kind: "exercise" | "article" | "video";
+  kind: "exercise" | "article" | "video" | "session";
   title: string;
   body: string;
   exercise_id: string | null;
   storage_path: string | null;
+  data: unknown;
   position: number;
   exercises: { code: string; title: string } | null;
 };
@@ -32,7 +51,7 @@ export default async function ProgramContentPage({ params }: { params: Promise<{
   // RLS liefert Inhalte nur mit gültigem Zugang
   const { data, error } = await supabase
     .from("product_content")
-    .select("id, kind, title, body, exercise_id, storage_path, position, exercises(code, title)")
+    .select("id, kind, title, body, exercise_id, storage_path, data, position, exercises(code, title)")
     .eq("product_id", product.id)
     .order("position");
   if (error) throw new Error(error.message);
@@ -63,7 +82,7 @@ export default async function ProgramContentPage({ params }: { params: Promise<{
             <li key={it.id}>
               <Card>
                 <p className="eyebrow mb-2">
-                  {String(i + 1).padStart(2, "0")} · {it.kind === "article" ? "Lektion" : it.kind === "video" ? "Video" : "Übung"}
+                  {String(i + 1).padStart(2, "0")} · {KIND_LABEL[it.kind]}
                 </p>
                 <h2 className="text-2xl font-bold">{it.title}</h2>
                 {it.kind === "video" && it.storage_path && (
@@ -78,6 +97,7 @@ export default async function ProgramContentPage({ params }: { params: Promise<{
                     {it.exercises?.code} · Übung mit Video öffnen →
                   </Link>
                 )}
+                {it.kind === "session" && <SessionContent value={it.data} />}
                 {it.body && <p className="mt-4 whitespace-pre-line leading-relaxed text-mute">{it.body}</p>}
               </Card>
             </li>
