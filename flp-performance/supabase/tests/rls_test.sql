@@ -376,6 +376,44 @@ select tests.anon();
 select tests.denied($$select * from public.week_templates$$, 'Anonym: keine Vorlagen');
 select tests.logout();
 
+-- Positionsprogramme: Import strukturierter Einheiten
+select tests.login('00000000-0000-0000-0000-00000000000a');
+select tests.ok((select public.import_program_product('{"slug":"pro-test","title":"Pro · Test","summary":"S","price_cents":6900,"access_days":183,
+  "sessions":[{"title":"Einheit 1","data":{"exercises":[]}},{"title":"Einheit 2","data":{"exercises":[]}}]}'::jsonb) is not null),
+  'Admin importiert ein Programm mit Einheiten');
+select tests.ok((select not is_active and price_cents = 6900 and access_days = 183 from public.products where slug = 'pro-test'),
+  'Importiertes Programm ist inaktiv und übernimmt Preis und Laufzeit');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'session'), 2, 'Zwei Einheiten importiert');
+insert into public.product_content (product_id, kind, title, body)
+  select id, 'article', 'Eigene Lektion', 'Text' from public.products where slug = 'pro-test';
+update public.products set price_cents = 5900 where slug = 'pro-test';
+select public.import_program_product('{"slug":"pro-test","title":"Pro · Neu","price_cents":9900,
+  "sessions":[{"title":"Einheit A","data":{"exercises":[]}}]}'::jsonb);
+select tests.ok((select title = 'Pro · Neu' and price_cents = 5900 from public.products where slug = 'pro-test'),
+  'Erneuter Import aktualisiert Texte, behält den angepassten Preis');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'session'), 1, 'Erneuter Import ersetzt die Einheiten');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'article'), 1, 'Erneuter Import behält eigene Lektionen');
+select tests.denied($$select public.import_program_product('{"slug":"leer","title":"Leer","price_cents":4900,"sessions":[]}'::jsonb)$$,
+  'Programm ohne Einheiten abgelehnt');
+select tests.denied($$insert into public.product_content (product_id, kind, title)
+  select id, 'session', 'Ohne Daten' from public.products where slug = 'pro-test'$$, 'Einheit ohne Daten abgelehnt');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.denied($$select public.import_program_product('{"slug":"coach-test","title":"Coach","price_cents":4900,
+  "sessions":[{"title":"E","data":{}}]}'::jsonb)$$, 'Coach kann keine Programme importieren');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.denied($$select public.import_program_product('{"slug":"eltern-test","title":"Eltern","price_cents":4900,
+  "sessions":[{"title":"E","data":{}}]}'::jsonb)$$, 'Eltern können keine Programme importieren');
+select tests.eq((select count(*) from public.product_content where kind = 'session'), 0, 'Einheiten ohne Kauf nicht sichtbar');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select public.import_program_product('{}'::jsonb)$$, 'Anonym: kein Programmimport');
+select tests.logout();
+
 -- Datenlöschung: Admin löscht Spieler inkl. veröffentlichter Beurteilungen
 select tests.login('00000000-0000-0000-0000-00000000000a');
 select tests.allowed($$delete from public.players where id = '10000000-0000-0000-0000-000000000001'$$,
