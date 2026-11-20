@@ -23,6 +23,10 @@
   --color-focus-spiel: #c7a45a;
   --color-focus-regeneration: #a3a4a9;
 
+  /* Spielfeld (Positionswahl) */
+  --color-pitch: #10251a;
+  --color-pitch-line: #1f3d2b;
+
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Archivo Variable", "Inter Variable", ui-sans-serif, sans-serif;
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { exportPrograms } from "../../scripts/flp-app-export.mjs";
 import { parseSessionData, programImportSchema, sessionMinutes } from "./programs";
+import { POSITIONS, isPositionProduct, positionProductSlug } from "./positions";
 
 const appHtml = path.resolve(__dirname, "../../../flp-app/index.html");
 
@@ -14,6 +15,13 @@ describe("Positionsprogramme", () => {
     const d = parseSessionData({ level: "jugend", exercises: [{ name: "A", minutes: 10 }, { name: "B", minutes: 5 }] })!;
     expect(sessionMinutes(d)).toBe(15);
     expect(sessionMinutes({ ...d, minutes: 60 })).toBe(60);
+  });
+
+  it("erkennt Positionsprogramme am Slug", () => {
+    expect(isPositionProduct("jugend-fluegelspieler")).toBe(true);
+    expect(isPositionProduct("pro-stuermer")).toBe(true);
+    expect(isPositionProduct("flp-training")).toBe(false);
+    expect(isPositionProduct("pro-mittelfeld")).toBe(false);
   });
 
   it("lehnt ungültige Importe ab", () => {
@@ -34,6 +42,8 @@ describe("Positionsprogramme", () => {
       if (!parsed.success) continue;
       expect(parsed.data.products).toHaveLength(7);
       expect(parsed.data.products.every((p) => p.slug.startsWith(`${level}-`))).toBe(true);
+      // Positionswahl im Shop findet jedes exportierte Programm
+      expect(parsed.data.products.map((p) => p.slug).sort()).toEqual(POSITIONS.map((p) => positionProductSlug(level, p.slug)).sort());
       // Upload-Limit der Server Action
       expect(JSON.stringify(out).length).toBeLessThan(900_000);
     }

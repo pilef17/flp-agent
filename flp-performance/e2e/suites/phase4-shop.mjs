@@ -176,6 +176,17 @@ const suite = () =>
     await anon.goto(`${BASE}/programme/jugend-fluegelspieler`);
     check(await seen(anon.getByRole("heading", { name: "Jugend-Programm · Flügelspieler" })) && await seen(anon.getByText("CHF 49.00")), "Shop: Jugend-Programm mit Preis");
     check(await seen(anon.getByText(/Woche 1 · A:/)) && (await anon.getByText("Jonglieren").count()) === 0, "Shop: Einheiten nur als Titel, Inhalt geschützt");
+    await anon.goto(`${BASE}/programme`);
+    check(await seen(anon.getByRole("heading", { name: "Was ist deine Position?" })), "Shop: Positionswahl mit Spielfeld");
+    check(await anon.getByRole("button", { name: "Pro · 17+" }).isDisabled(), "Shop: Stufe ohne aktive Programme gesperrt");
+    check(await seen(anon.getByText("Bald verfügbar")), "Shop: inaktive Positionen als «Bald verfügbar»");
+    check(await seen(anon.getByRole("heading", { name: "Weitere Programme" })), "Shop: übrige Programme unter «Weitere Programme»");
+    const posAxe = await new AxeBuilder({ page: anon }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const posSerious = posAxe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    check(posSerious.length === 0, `Positionswahl barrierefrei (${posSerious.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`).join(", ") || "keine Verstösse"})`);
+    await anon.screenshot({ path: `${OUT}/p4_positionen_mobile.png`, fullPage: true });
+    await anon.getByRole("link", { name: /7 · Jugend: Flügelspieler/ }).click();
+    check(await anon.waitForURL("**/programme/jugend-fluegelspieler").then(() => true).catch(() => false), "Shop: Position führt zum Programm");
     await admin.goto(`${BASE}/admin/bestellungen`);
     await admin.fill("#grant-email", "zweit@flp.test");
     await admin.selectOption("#grant-product", { label: "Jugend-Programm · Flügelspieler" });
