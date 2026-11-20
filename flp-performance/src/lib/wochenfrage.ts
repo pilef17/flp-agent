@@ -310,3 +310,62 @@ export function coachMessage(m: {
     `Antwort: ${m.answer}`,
   ].join("\n");
 }
+
+/**
+ * WhatsApp-Text für die Familien (Knopf «Per WhatsApp teilen» im Trainer-Panel).
+ * Woche 1 stellt die Wochenfrage vor, danach eine kurze Nachricht mit Woche und Thema.
+ */
+export function familyMessage(state: WeekState, url: string, coachName: string): string {
+  const signature = coachName ? `${coachName} · FLP Performance` : "FLP Performance";
+  if (state.status === "pause") {
+    return [
+      "⚽ *FLP Wochenfrage*",
+      "",
+      `Über die Feiertage machen wir Pause. Die nächste Frage kommt am ${longThursday(state.nextDate)}.`,
+      "",
+      "Frohe Festtage und sportliche Grüsse",
+      signature,
+    ].join("\n");
+  }
+  if (state.status === "ended") {
+    return [
+      "⚽ *FLP Wochenfrage*",
+      "",
+      "Danke fürs Mitmachen in den letzten 12 Wochen! Jetzt folgt die neue Beurteilung – danach starten wir mit dem nächsten Zyklus.",
+      "",
+      "Sportliche Grüsse",
+      signature,
+    ].join("\n");
+  }
+  if (state.weekNumber === 1) {
+    return [
+      "Liebe Eltern 👋",
+      "",
+      "Ab heute erhaltet ihr jeden Donnerstag die *FLP-Wochenfrage*.",
+      "",
+      "*So funktioniert's:*",
+      "• Eine kurze Frage zu einem Punkt aus dem Training – Mentalität, Körper, individuelle und kollektive Aktionen",
+      "• Lest die Frage gemeinsam, euer Kind antwortet selbst. Ehrlich ist wichtiger als perfekt.",
+      "• Dauert weniger als eine Minute",
+      "",
+      "Nach dem Senden bekommt euer Kind einen kleinen *Auftrag fürs nächste Training*.",
+      "",
+      "Die Antworten sehe nur ich – ich nutze sie, um das Training gezielt anzupassen.",
+      "",
+      `👉 ${url}`,
+      "",
+      "Sportliche Grüsse",
+      signature,
+    ].join("\n");
+  }
+  return [
+    `⚽ *FLP Wochenfrage · Woche ${state.weekNumber}*`,
+    `Thema: ${state.themeLabel} – ${state.focus}`,
+    "",
+    "Bitte beantwortet die Frage gemeinsam mit eurem Kind (1 Minute):",
+    `👉 ${url}`,
+    "",
+    "Danke & sportliche Grüsse",
+    signature,
+  ].join("\n");
+}

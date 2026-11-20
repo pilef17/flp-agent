@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
-import { answerLabel, currentState, longThursday, planWeekOf, weekLabel, weekName, PLAN, PAUSES, REASSESSMENT_DATE, THEME_LABEL, THEME_SHEET, type ThemeKey } from "@/lib/wochenfrage";
+import { answerLabel, currentState, familyMessage, longThursday, planWeekOf, weekLabel, weekName, PLAN, PAUSES, REASSESSMENT_DATE, THEME_LABEL, THEME_SHEET, type ThemeKey } from "@/lib/wochenfrage";
 import { PageHeader, EmptyState, Badge } from "@/components/ui/Feedback";
 import { Card, CardTitle, Stat } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
@@ -41,7 +41,7 @@ function familyLink(): string {
 }
 
 export default async function WochenfrageAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
   const params = await searchParams;
   const athlete = params.athlet?.trim() || "";
   const week = /^\d{4}-\d{2}-\d{2}$/.test(params.woche ?? "") ? params.woche! : "";
@@ -92,9 +92,9 @@ export default async function WochenfrageAdmin({ searchParams }: { searchParams:
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Card>
           <CardTitle eyebrow="Link für die Familien" title="Jeden Donnerstag per WhatsApp senden" />
-          <ShareLink url={familyLink()} />
+          <ShareLink url={familyLink()} message={familyMessage(now, familyLink(), viewer.fullName.trim().split(/\s+/)[0] ?? "")} />
           <p className="mt-4 text-xs text-mute">
-            Kein Login nötig. Der Name wird auf dem Handy gemerkt. Wer in derselben Woche erneut sendet, korrigiert seine Antwort.
+            Tipp: an eine WhatsApp-Broadcast-Liste senden – jede Familie erhält die Nachricht einzeln. Kein Login nötig; wer in derselben Woche erneut sendet, korrigiert seine Antwort.
           </p>
         </Card>
         <Card>

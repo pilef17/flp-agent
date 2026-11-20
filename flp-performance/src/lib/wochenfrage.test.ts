@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  familyMessage,
   coachMessage,
   whatsappNumber,
   answerLabel,
@@ -100,5 +101,20 @@ describe("Wochenfrage", () => {
     expect(
       coachMessage({ weekNumber: 1, title: "Mentalität · Umgang mit Fehlern", question: "Frage?", name: "Lio", age: "11", team: "FC Muster", answer: "4 · Oft" }),
     ).toBe("FLP Wochenfrage · Woche 1\nMentalität · Umgang mit Fehlern\nFrage?\n\nAthlet: Lio\nAlter: 11\nTeam: FC Muster\nAntwort: 4 · Oft");
+  });
+
+  it("schreibt die WhatsApp-Nachricht an die Familien passend zur Woche", () => {
+    const url = "https://frage.example.ch";
+    const w1 = familyMessage(stateForDate("2026-11-19"), url, "Felipe");
+    expect(w1).toMatch(/^Liebe Eltern/);
+    expect(w1).toContain(`👉 ${url}`);
+    expect(w1).toContain("Felipe · FLP Performance");
+    const w2 = familyMessage(stateForDate("2026-11-26"), url, "Felipe");
+    expect(w2).toContain("Woche 2");
+    expect(w2).toContain("Thema: Körperliche Fähigkeiten – Stabil bremsen");
+    expect(w2).toContain(url);
+    const pause = familyMessage(stateForDate("2026-12-24"), url, "");
+    expect(pause).toContain("Donnerstag, 07.01.2027");
+    expect(pause).toContain("FLP Performance");
   });
 });
