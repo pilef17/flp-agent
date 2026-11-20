@@ -7,7 +7,9 @@ import { weekDays, weekdayName, shortDate, weekLabel } from "@/lib/dates";
 import { dosage } from "@/lib/exercises";
 import { PageHeader, Badge, EmptyState } from "@/components/ui/Feedback";
 import { Card } from "@/components/ui/Card";
-import { AddExerciseForm, AddSessionForm, type ExerciseOption } from "../Forms";
+import { FocusBadge, TimeLabel, focusBarClass } from "@/components/training/Focus";
+import { shortTime } from "@/lib/focus";
+import { AddExerciseForm, AddSessionForm, EditSessionForm, type ExerciseOption } from "../Forms";
 import { deletePlan, deleteSession, moveSessionExercise, removeSessionExercise, setPlanStatus } from "../actions";
 
 export const metadata: Metadata = { title: "Trainingsplan bearbeiten" };
@@ -22,7 +24,16 @@ type Item = {
   notes: string;
   exercises: { code: string; title: string; status: string } | null;
 };
-type Session = { id: string; title: string; scheduled_on: string; notes: string; session_exercises: Item[] };
+type Session = {
+  id: string;
+  title: string;
+  scheduled_on: string;
+  notes: string;
+  focus: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  session_exercises: Item[];
+};
 
 export default async function PlanBuilderPage({ params }: { params: Promise<{ planId: string }> }) {
   await requireStaff();
@@ -34,7 +45,7 @@ export default async function PlanBuilderPage({ params }: { params: Promise<{ pl
     supabase
       .from("training_plans")
       .select(
-        "id, title, notes, week_start, status, players(id, first_name, last_name), training_sessions(id, title, scheduled_on, notes, session_exercises(id, position, sets, repetitions, duration_seconds, rest_seconds, notes, exercises(code, title, status)))",
+        "id, title, notes, week_start, status, players(id, first_name, last_name), training_sessions(id, title, scheduled_on, notes, focus, starts_at, ends_at, session_exercises(id, position, sets, repetitions, duration_seconds, rest_seconds, notes, exercises(code, title, status)))",
       )
       .eq("id", planId)
       .maybeSingle(),
@@ -92,11 +103,18 @@ export default async function PlanBuilderPage({ params }: { params: Promise<{ pl
             return (
               <Card key={s.id}>
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="eyebrow">
-                      {weekdayName(s.scheduled_on)}, {shortDate(s.scheduled_on)}
-                    </p>
-                    <h2 className="mt-1 text-xl font-bold">{s.title}</h2>
+                  <div className="flex gap-3">
+                    <span aria-hidden className={`w-1 shrink-0 rounded-full ${focusBarClass(s.focus)}`} />
+                    <div>
+                      <p className="eyebrow">
+                        {weekdayName(s.scheduled_on)}, {shortDate(s.scheduled_on)}
+                      </p>
+                      <h2 className="mt-1 text-xl font-bold">{s.title}</h2>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <FocusBadge focus={s.focus} />
+                        <TimeLabel start={s.starts_at} end={s.ends_at} />
+                      </div>
+                    </div>
                   </div>
                   <form action={deleteSession}>
                     <input type="hidden" name="planId" value={plan.id} />
@@ -106,6 +124,13 @@ export default async function PlanBuilderPage({ params }: { params: Promise<{ pl
                     </button>
                   </form>
                 </div>
+                <details className="mb-4">
+                  <summary className="min-h-11 cursor-pointer content-center text-sm text-mute hover:text-paper">Fokus, Uhrzeit und Titel ändern</summary>
+                  <EditSessionForm
+                    planId={plan.id}
+                    session={{ id: s.id, title: s.title, notes: s.notes, focus: s.focus, startsAt: shortTime(s.starts_at), endsAt: shortTime(s.ends_at) }}
+                  />
+                </details>
                 {items.length > 0 && (
                   <ol className="mb-4 space-y-2">
                     {items.map((it, idx) => (

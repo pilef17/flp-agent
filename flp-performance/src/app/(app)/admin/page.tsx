@@ -45,7 +45,14 @@ export default async function AdminDashboard() {
       <PageHeader
         eyebrow={isAdmin ? "Administrator" : "Trainer"}
         title="Übersicht"
-        action={<ButtonLink href="/admin/spieler">Spieler verwalten</ButtonLink>}
+        action={
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <ButtonLink href="/admin/spieler">Spieler verwalten</ButtonLink>
+            <ButtonLink href="/admin/vorlagen" variant="secondary">
+              Wochenvorlagen
+            </ButtonLink>
+          </div>
+        }
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Spieler" value={players.count ?? 0} hint="Aktive Profile" />

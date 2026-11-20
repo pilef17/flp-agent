@@ -4,6 +4,7 @@ import { signOut } from "@/app/(auth)/actions";
 import { navFor, homePathFor } from "@/lib/routes";
 import type { Viewer } from "@/lib/auth";
 import { NavLinks } from "./NavLinks";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 
 const ROLE_LABEL = { admin: "Administrator", coach: "Trainer", parent: "Elternteil", player: "Spieler" } as const;
 
@@ -41,7 +42,10 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-8 sm:px-8 sm:pt-12 md:pb-16">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-8 sm:px-8 sm:pt-12 md:pb-16">
+        {children}
+        <LegalLinks className="mt-16 border-t border-line pt-4" />
+      </main>
       {/* Mobile Navigation */}
       <nav aria-label="Mobile Navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ink/95 backdrop-blur md:hidden">
         <NavLinks items={items} mobile />

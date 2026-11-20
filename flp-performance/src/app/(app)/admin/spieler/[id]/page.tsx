@@ -47,9 +47,10 @@ export default async function PlayerAdminPage({
     .limit(20);
   const nextMonday = addDays(mondayOf(todayInSwitzerland()), 7);
 
-  const [{ data: assessments }, { data: feedback }] = await Promise.all([
+  const [{ data: assessments }, { data: feedback }, { data: templates }] = await Promise.all([
     supabase.from("assessments").select("id, kind, assessed_on, status").eq("player_id", id).order("assessed_on", { ascending: false }),
     supabase.from("coach_feedback").select("id, title, status, created_at, published_at").eq("player_id", id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("week_templates").select("id, title, audience").order("title"),
   ]);
   const hasInitial = (assessments ?? []).some((a) => a.kind === "initial");
 
@@ -137,7 +138,12 @@ export default async function PlayerAdminPage({
                 ))}
               </ul>
             )}
-            <NewPlanSection playerId={player.id} defaultDate={nextMonday} startOpen={(plans ?? []).length === 0} />
+            <NewPlanSection playerId={player.id} defaultDate={nextMonday} startOpen={(plans ?? []).length === 0} templates={templates ?? []} />
+            <p className="mt-4 text-xs text-mute">
+              <Link href="/admin/vorlagen" className="underline underline-offset-4 hover:text-paper">
+                Wochenvorlagen verwalten
+              </Link>
+            </p>
           </Card>
 
           <Card>

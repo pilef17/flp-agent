@@ -14,6 +14,15 @@
   --color-ok: #6fbf8e;
   --color-danger: #e0675f;
 
+  /* Trainingsfokus (Wochenstruktur) – alle AA auf graphite */
+  --color-focus-kraft: #f2706b;
+  --color-focus-power: #f5a04a;
+  --color-focus-ausdauer: #4fc98a;
+  --color-focus-schnelligkeit: #b98cf5;
+  --color-focus-technik: #5fb4f0;
+  --color-focus-spiel: #c7a45a;
+  --color-focus-regeneration: #a3a4a9;
+
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Archivo Variable", "Inter Variable", ui-sans-serif, sans-serif;
 

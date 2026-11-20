@@ -17,6 +17,9 @@ export type SessionView = {
   title: string;
   notes: string;
   scheduledOn: string;
+  focus: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
   completed: boolean;
   exercises: PlanExerciseView[];
 };
@@ -26,6 +29,9 @@ type RawSession = {
   title: string;
   notes: string;
   scheduled_on: string;
+  focus: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
   session_exercises: {
     id: string;
     exercise_id: string;
@@ -45,7 +51,7 @@ export async function loadWeekPlan(supabase: SupabaseClient, playerId: string, m
   const { data, error } = await supabase
     .from("training_plans")
     .select(
-      "id, title, notes, week_start, training_sessions(id, title, notes, scheduled_on, session_exercises(id, exercise_id, position, sets, repetitions, duration_seconds, rest_seconds, notes, exercises(code, title)), session_completions(session_exercise_id))",
+      "id, title, notes, week_start, training_sessions(id, title, notes, scheduled_on, focus, starts_at, ends_at, session_exercises(id, exercise_id, position, sets, repetitions, duration_seconds, rest_seconds, notes, exercises(code, title)), session_completions(session_exercise_id))",
     )
     .eq("player_id", playerId)
     .eq("status", "published")
@@ -62,6 +68,9 @@ export async function loadWeekPlan(supabase: SupabaseClient, playerId: string, m
         title: s.title,
         notes: s.notes,
         scheduledOn: s.scheduled_on,
+        focus: s.focus,
+        startsAt: s.starts_at,
+        endsAt: s.ends_at,
         completed: s.session_completions.some((c) => c.session_exercise_id === null),
         exercises: [...s.session_exercises]
           .sort((a, b) => a.position - b.position)

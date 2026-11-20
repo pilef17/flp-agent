@@ -10,6 +10,7 @@ import { addDays, isIsoDate, mondayOf, shortDate, todayInSwitzerland, weekDays, 
 import { PageHeader, EmptyState } from "@/components/ui/Feedback";
 import { SessionBlock } from "@/components/player/SessionList";
 import { PlayerSwitcher } from "@/components/player/PlayerSwitcher";
+import { focusBarClass } from "@/components/training/Focus";
 
 export const metadata: Metadata = { title: "Trainingsplan" };
 
@@ -76,20 +77,23 @@ export default async function TrainingCalendar({ searchParams }: { searchParams:
               <li
                 key={day}
                 aria-current={isToday ? "date" : undefined}
-                className={`rounded-card border p-4 sm:p-5 ${isToday ? "border-gold" : "border-line"} ${daySessions.length ? "bg-graphite" : ""}`}
+                className={`flex gap-3 rounded-card border p-4 sm:p-5 ${isToday ? "border-gold" : "border-line"} ${daySessions.length ? "bg-graphite" : ""}`}
               >
-                <p className={`mb-3 text-xs font-semibold uppercase tracking-wider ${isToday ? "text-gold" : "text-mute"}`}>
-                  {weekdayName(day)}, {shortDate(day)} {isToday && "· Heute"}
-                </p>
-                {daySessions.length === 0 ? (
-                  <p className="text-sm text-mute">Kein Training</p>
-                ) : (
-                  <div className="space-y-5">
-                    {daySessions.map((s) => (
-                      <SessionBlock key={s.id} session={s} showDate={false} />
-                    ))}
-                  </div>
-                )}
+                <span aria-hidden className={`w-1 shrink-0 rounded-full ${daySessions.length ? focusBarClass(daySessions[0].focus) : "bg-line"}`} />
+                <div className="min-w-0 flex-1">
+                  <p className={`mb-3 text-xs font-semibold uppercase tracking-wider ${isToday ? "text-gold" : "text-mute"}`}>
+                    {weekdayName(day)}, {shortDate(day)} {isToday && "· Heute"}
+                  </p>
+                  {daySessions.length === 0 ? (
+                    <p className="text-sm text-mute">Ruhetag</p>
+                  ) : (
+                    <div className="space-y-5">
+                      {daySessions.map((s) => (
+                        <SessionBlock key={s.id} session={s} showDate={false} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </li>
             );
           })}
