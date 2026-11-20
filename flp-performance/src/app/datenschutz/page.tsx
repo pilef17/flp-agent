@@ -85,6 +85,17 @@ export default function PrivacyPolicyPage() {
       </section>
 
       <section>
+        <h2>Spieler-Check</h2>
+        <p>
+          Den kostenlosen Spieler-Check unter <Link href="/check">/check</Link> beantworten Eltern ohne Anmeldung. Die Antworten werden
+          nur im Browser ausgewertet und nicht gespeichert. Nur wer am Ende freiwillig Kontaktdaten sendet und der Kontaktaufnahme
+          zustimmt, übermittelt uns Name, E-Mail-Adresse, optional Alter und Position des Kindes sowie das Ergebnis des Checks. Wir
+          nutzen diese Angaben ausschliesslich, um uns zum Ergebnis zu melden, und löschen sie spätestens nach 12 Monaten oder
+          früher auf Wunsch.
+        </p>
+      </section>
+
+      <section>
         <h2>Cookies</h2>
         <p>
           Wir verwenden nur technisch notwendige Cookies, damit du angemeldet bleibst. Es gibt keine Analyse-, Tracking- oder
@@ -124,6 +135,7 @@ export default function PrivacyPolicyPage() {
           <li>Konto- und Trainingsdaten: solange das Konto bzw. das Coaching besteht, danach löschen wir sie auf Anfrage.</li>
           <li>Trainingsvideos: bis zum Widerruf der Einwilligung oder bis zur Löschung des Spielerprofils.</li>
           <li>Kauf- und Zahlungsdaten: 10 Jahre, weil wir sie für die Buchhaltung aufbewahren müssen.</li>
+          <li>Kontaktanfragen aus dem Spieler-Check: höchstens 12 Monate.</li>
         </ul>
       </section>
 
