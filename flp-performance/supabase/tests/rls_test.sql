@@ -516,6 +516,34 @@ select tests.eq((select count(*) from public.weekly_answers), 1, 'Wochenfrage: A
 select tests.logout();
 
 -- ---------------------------------------------------------------------------
+-- Spieler-Check: Kontaktanfragen nur über den Server, lesen nur Admin/Coach
+-- ---------------------------------------------------------------------------
+set role service_role;
+insert into public.check_leads (parent_name, email, child_age, position, level, score, technik, taktik, answers, consent_at)
+  values ('Anna Muster', 'anna@test.invalid', 11, 'Stürmer', 'mittel', 14, 8, 6, '{1,1,2,1,2,1,1,1,1,1,1,1}', now());
+reset role;
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', 'profi', 1, 1, 0, '{1,0,0,0,0,0,0,0,0,0,0,0}', now())$$, 'Check: nur gültige Niveaus');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', 'mittel', 12, 6, 6, '{1,1}', now())$$, 'Check: genau 12 Antworten');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'X@Test.invalid', 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: E-Mail klein geschrieben');
+select tests.anon();
+select tests.denied($$select 1 from public.check_leads$$, 'Check: anonym nicht lesbar');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('Bot Bot', 'bot@test.invalid', 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: anonym kein direktes Schreiben');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.check_leads), 0, 'Check: Eltern sehen keine Anfragen');
+select tests.denied($$delete from public.check_leads$$, 'Check: Eltern können nicht löschen');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.check_leads), 1, 'Check: Coach sieht Anfragen');
+select tests.denied($$update public.check_leads set level = 'einsteiger'$$, 'Check: Coach kann Anfragen nicht verändern');
+select tests.allowed($$delete from public.check_leads where email = 'anna@test.invalid'$$, 'Check: Coach kann Anfragen löschen');
+select tests.logout();
+
+-- ---------------------------------------------------------------------------
 select format('%s %s%s', case when passed then 'ok  ' else 'FAIL' end, name,
   case when passed then '' else ' – ' || coalesce(detail, '') end)
 from tests.results order by id;

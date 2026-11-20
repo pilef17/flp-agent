@@ -51,6 +51,9 @@ export default async function AdminDashboard() {
             <ButtonLink href="/admin/vorlagen" variant="secondary">
               Wochenvorlagen
             </ButtonLink>
+            <ButtonLink href="/admin/check" variant="secondary">
+              Spieler-Check
+            </ButtonLink>
           </div>
         }
       />
