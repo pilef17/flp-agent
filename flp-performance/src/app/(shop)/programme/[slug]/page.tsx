@@ -45,7 +45,7 @@ export default async function ProgramDetailPage({
       : Promise.resolve({ data: [] }),
   ]);
   const owned = (ents ?? []).some((e) => isEntitlementActive(e));
-  const items = (outline ?? []) as { kind: keyof typeof KIND_LABEL; title: string }[];
+  const items = (outline ?? []) as { kind: keyof typeof KIND_LABEL; title: string | null }[];
 
   return (
     <>
