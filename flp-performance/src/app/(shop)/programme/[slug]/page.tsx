@@ -81,7 +81,12 @@ export default async function ProgramDetailPage({
                 </SubmitButton>
               </form>
             ) : (
-              <ButtonLink href={`/login?next=${encodeURIComponent(`/programme/${p.slug}`)}`}>Anmelden und kaufen</ButtonLink>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href={`/registrieren?next=${encodeURIComponent(`/programme/${p.slug}`)}`}>Konto erstellen und kaufen</ButtonLink>
+                <ButtonLink href={`/login?next=${encodeURIComponent(`/programme/${p.slug}`)}`} variant="secondary">
+                  Ich habe ein Konto
+                </ButtonLink>
+              </div>
             )}
             {!owned && (
               <p className="text-xs text-mute">

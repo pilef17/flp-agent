@@ -70,7 +70,27 @@ const suite = () =>
     await anon.waitForURL("**/programme/flp-training");
     check(await seen(anon.getByText("Lektion 1: Ballgefühl")), "Inhaltsübersicht (nur Titel) öffentlich");
     check((await anon.getByText("Jeden Tag 10 Minuten").count()) === 0, "Inhalt selbst nicht öffentlich");
-    check(await seen(anon.getByRole("link", { name: "Anmelden und kaufen" })), "Kauf erfordert Login");
+    check(await seen(anon.getByRole("link", { name: "Konto erstellen und kaufen" })), "Kauf erfordert Konto");
+    check(await seen(anon.getByRole("link", { name: "Ich habe ein Konto" })), "Kauf: Anmelden für bestehende Konten");
+
+    // Neue Familie: Registrierung aus dem Programm führt nach der E-Mail-Bestätigung zurück zum Kauf
+    const buyer = await ctx(true);
+    await buyer.goto(`${BASE}/programme/flp-training`);
+    await buyer.getByRole("link", { name: "Konto erstellen und kaufen" }).click();
+    await buyer.waitForURL("**/registrieren?next=*");
+    check(await seen(buyer.getByText("direkt zurück zum Programm")), "Registrierung erklärt den Rückweg zum Kauf");
+    const tBuyer = Date.now();
+    await buyer.fill("#f-fullName", "Neue Familie");
+    await buyer.fill("#f-email", "neu-kauf@flp.test");
+    await buyer.fill("#f-password", PW);
+    await buyer.fill("#f-passwordConfirm", PW);
+    await buyer.check("input[name=privacy]");
+    await buyer.click("button[type=submit]");
+    await buyer.getByText("Fast geschafft").waitFor();
+    await buyer.goto(await mailLink("neu-kauf@flp.test", tBuyer));
+    await buyer.waitForURL("**/programme/flp-training");
+    check(await seen(buyer.getByRole("button", { name: /Jetzt kaufen – CHF 42.50/ })), "Nach Bestätigung direkt zurück beim Programm mit Kaufknopf");
+    await buyer.context().close();
     await anon.goto(`${BASE}/programme/flp-training/inhalt`);
     check(anon.url().includes("/login"), "Programminhalt ohne Login gesperrt");
 

@@ -38,7 +38,7 @@ export async function signUp(_: FormState, formData: FormData): Promise<FormStat
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${publicEnv.siteUrl()}/auth/confirm?next=/elternbereich`,
+      emailRedirectTo: `${publicEnv.siteUrl()}/auth/confirm?next=${encodeURIComponent(safeNextPath(String(formData.get("next") ?? ""), "/elternbereich"))}`,
       data: { full_name: parsed.data.fullName, privacy_policy_accepted: new Date().toISOString() },
     },
   });
