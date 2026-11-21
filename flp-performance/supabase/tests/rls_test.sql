@@ -414,6 +414,35 @@ select tests.anon();
 select tests.denied($$select public.import_program_product('{}'::jsonb)$$, 'Anonym: kein Programmimport');
 select tests.logout();
 
+-- Inhaltsübersicht: ohne Kauf nur die ersten 3 Titel
+select tests.login('00000000-0000-0000-0000-00000000000a');
+insert into public.products (slug, title, price_cents, is_active) values ('vorschau-test', 'Vorschau', 2900, true);
+insert into public.product_content (product_id, kind, title, body, position)
+  select id, 'article', 'Lektion ' || n, 'Text', n from public.products, generate_series(1, 5) n where slug = 'vorschau-test';
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Admin: alle Titel in der Übersicht');
+select tests.logout();
+select tests.anon();
+select tests.eq((select count(*) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Anonym: Anzahl aller Inhalte sichtbar');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 3::bigint,
+  'Anonym: nur die ersten 3 Titel sichtbar');
+select tests.ok((select bool_and(title is null) from public.product_outline((select id from public.products where slug = 'vorschau-test'))
+  where item_position > 3), 'Anonym: Titel ab Nr. 4 verborgen');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 3::bigint,
+  'Eltern ohne Kauf: nur die ersten 3 Titel');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000a');
+insert into public.entitlements (user_id, product_id, source, granted_by)
+  select '00000000-0000-0000-0000-0000000000a1', id, 'manual', '00000000-0000-0000-0000-00000000000a' from public.products where slug = 'vorschau-test';
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Nach Kauf: alle Titel sichtbar');
+select tests.logout();
+
 -- Datenlöschung: Admin löscht Spieler inkl. veröffentlichter Beurteilungen
 select tests.login('00000000-0000-0000-0000-00000000000a');
 select tests.allowed($$delete from public.players where id = '10000000-0000-0000-0000-000000000001'$$,
