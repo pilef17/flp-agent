@@ -176,6 +176,8 @@ const suite = () =>
     await anon.goto(`${BASE}/programme/jugend-fluegelspieler`);
     check(await seen(anon.getByRole("heading", { name: "Jugend-Programm · Flügelspieler" })) && await seen(anon.getByText("CHF 49.00")), "Shop: Jugend-Programm mit Preis");
     check(await seen(anon.getByText(/Woche 1 · A:/)) && (await anon.getByText("Jonglieren").count()) === 0, "Shop: Einheiten nur als Titel, Inhalt geschützt");
+    check(await seen(anon.getByText("12 Einheiten", { exact: true })) && await seen(anon.getByText("+ 9 weitere – nach dem Kauf freigeschaltet")), "Shop: nur Anzahl und Vorschau der ersten 3 Einheiten");
+    check((await anon.getByText(/Woche 2 · B:/).count()) === 0, "Shop: weitere Einheiten nicht ablesbar");
     await anon.goto(`${BASE}/programme`);
     check(await seen(anon.getByRole("heading", { name: "Was ist deine Position?" })), "Shop: Positionswahl mit Spielfeld");
     check(await anon.getByRole("button", { name: "Pro · 17+" }).isDisabled(), "Shop: Stufe ohne aktive Programme gesperrt");
