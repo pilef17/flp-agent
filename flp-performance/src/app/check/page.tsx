@@ -9,6 +9,7 @@ import { CheckForm, type Offer } from "./CheckForm";
 
 export const metadata: Metadata = {
   title: "Spieler-Check",
+  robots: { index: true, follow: true },
   description: "Kostenloser Spieler-Check für Eltern: In 3 Minuten erfahren, ob Ihr Kind Einsteiger, Mittel oder Fortgeschritten ist.",
   openGraph: {
     title: "FLP Performance · Spieler-Check",

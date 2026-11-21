@@ -15,16 +15,25 @@ const suite = () =>
       await page.getByRole("button", { name: "Ergebnis anzeigen" }).click();
     };
 
-    // Startseite: drei Einstiege für neue Familien
+    // Startseite: Check als Hauptweg, sichtbar ohne Scrollen
     const home = await phone();
     await home.goto(`${BASE}/`);
-    check(await seen(home.getByRole("heading", { name: "Spieler-Check" })), "Startseite: Spieler-Check als Einstieg");
+    const cta = home.getByRole("link", { name: "Kostenloser Spieler-Check" });
+    const box = await cta.boundingBox();
+    const vh = home.viewportSize()?.height ?? 0;
+    check(!!box && box.y + box.height <= vh, "Startseite: Check-Knopf ohne Scrollen sichtbar");
+    check(await seen(home.getByRole("heading", { name: "So funktioniert's" })), "Startseite: So funktioniert's");
     check(await seen(home.getByRole("link", { name: "Programme ansehen" })), "Startseite: Link zu den Programmen");
+    check((await home.getByRole("heading", { name: "Für Trainer" }).count()) === 0 && (await home.getByText("Für Trainer").count()) === 0, "Startseite: kein Trainer-Block");
+    await home.getByText("Ist ein Programm ein Abo?").tap();
+    check(await seen(home.getByText("Es verlängert sich nichts automatisch")), "Startseite: FAQ klappt auf");
     const homeAxe = await new AxeBuilder({ page: home }).withTags(["wcag2a", "wcag2aa"]).analyze();
     check(homeAxe.violations.length === 0, `Startseite barrierefrei${homeAxe.violations.length ? `: ${homeAxe.violations.map((v) => v.id).join(", ")}` : ""}`);
-    await home.getByRole("link", { name: "Check starten" }).tap();
+    await cta.tap();
     await home.waitForURL("**/check");
     check(home.url().endsWith("/check"), "Startseite führt zum Spieler-Check");
+    const robots = await (await home.request.get(`${BASE}/robots.txt`)).text();
+    check(robots.includes("Disallow: /admin") && robots.includes("Disallow: /elternbereich"), "robots.txt schliesst private Bereiche aus");
 
     const p = await phone();
     await p.goto(`${BASE}/check`);

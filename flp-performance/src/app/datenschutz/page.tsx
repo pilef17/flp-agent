@@ -67,6 +67,7 @@ export default function PrivacyPolicyPage() {
           <li>Gekaufte digitale Programme bereitstellen und Zahlungen abwickeln.</li>
           <li>Konto-E-Mails senden (Bestätigung, Einladung, Passwort zurücksetzen).</li>
           <li>Sicherheit der App gewährleisten und gesetzliche Pflichten erfüllen.</li>
+          <li>Anonym auswerten, wie oft die öffentlichen Seiten genutzt werden, um das Angebot zu verbessern.</li>
         </ul>
         <p>
           Grundlage ist der Vertrag mit dir (Coaching oder Kauf eines Programms) und für die Daten deines Kindes sowie für
@@ -101,6 +102,12 @@ export default function PrivacyPolicyPage() {
           Wir verwenden nur technisch notwendige Cookies, damit du angemeldet bleibst. Es gibt keine Analyse-, Tracking- oder
           Werbe-Cookies.
         </p>
+        <p>
+          Für die öffentlichen Seiten (Startseite, Spieler-Check, Shop) zählen wir Seitenaufrufe mit Vercel Web Analytics. Dabei
+          werden keine Cookies gesetzt und keine Personen wiedererkannt; erfasst werden nur aufgerufene Seite, Herkunftsseite,
+          Land sowie Gerät- und Browsertyp in zusammengefasster Form. Seiten im Konto, im Elternbereich und im Adminbereich werden
+          nicht erfasst.
+        </p>
       </section>
 
       <section>
@@ -112,7 +119,8 @@ export default function PrivacyPolicyPage() {
             Speicherort: Rechenzentrum in Stockholm (Schweden, EU).
           </li>
           <li>
-            <strong>Vercel</strong> (Vercel Inc., USA): Betrieb der Website.
+            <strong>Vercel</strong> (Vercel Inc., USA): Betrieb der Website und anonyme Besucherstatistik (Vercel Web Analytics)
+            für die öffentlichen Seiten Startseite, Spieler-Check und Shop – ohne Cookies und ohne Profilbildung.
           </li>
           <li>
             <strong>Stripe</strong> (Stripe Payments Europe Ltd., Irland): Zahlungsabwicklung mit Karte, TWINT, Apple Pay

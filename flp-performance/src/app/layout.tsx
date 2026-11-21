@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/archivo/wdth.css";
 import "./globals.css";
+import { PublicAnalytics } from "@/components/marketing/PublicAnalytics";
 
 export const metadata: Metadata = {
   title: { default: "FLP Performance", template: "%s · FLP Performance" },
@@ -20,7 +21,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de-CH">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PublicAnalytics />
+      </body>
     </html>
   );
 }
