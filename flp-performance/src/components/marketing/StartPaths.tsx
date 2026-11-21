@@ -42,7 +42,7 @@ export function StartPaths({
       href: `https://wa.me/${coachPhone}?text=${encodeURIComponent(PROBETRAINING_TEXT)}`,
       eyebrow: "Einzel- oder Gruppentraining",
       title: "Probetraining mit Felipe",
-      text: "Positionsspezifisches Training in der Schweiz. Schreiben Sie per WhatsApp für einen Termin.",
+      text: "Positionsspezifisches Training in Zürich und im Aargau, für 6- bis 16-Jährige. Schreiben Sie per WhatsApp für einen Termin.",
       cta: "Per WhatsApp anfragen",
       external: true,
     });

@@ -27,6 +27,8 @@ const suite = () =>
     check((await home.getByRole("heading", { name: "Für Trainer" }).count()) === 0 && (await home.getByText("Für Trainer").count()) === 0, "Startseite: kein Trainer-Block");
     await home.getByText("Ist ein Programm ein Abo?").tap();
     check(await seen(home.getByText("Es verlängert sich nichts automatisch")), "Startseite: FAQ klappt auf");
+    await home.getByText("Was kostet ein Probetraining?").tap();
+    check(await seen(home.getByText("CHF 30 für das Probetraining")), "Startseite: Preis Probetraining in der FAQ");
     const homeAxe = await new AxeBuilder({ page: home }).withTags(["wcag2a", "wcag2aa"]).analyze();
     check(homeAxe.violations.length === 0, `Startseite barrierefrei${homeAxe.violations.length ? `: ${homeAxe.violations.map((v) => v.id).join(", ")}` : ""}`);
     await cta.tap();

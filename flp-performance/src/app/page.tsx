@@ -12,7 +12,7 @@ import { whatsappNumber } from "@/lib/wochenfrage";
 export const metadata: Metadata = {
   title: { absolute: "FLP Performance · Positionstraining für junge Fussballer" },
   description:
-    "Kostenloser Spieler-Check in 3 Minuten: Wie fit ist Ihr Kind für die Rückrunde? Positionsspezifisches Fussballtraining in der Schweiz – mit Felipe und mit Programmen für zuhause.",
+    "Kostenloser Spieler-Check in 3 Minuten: Wie fit ist Ihr Kind für die Rückrunde? Positionsspezifisches Fussballtraining für 6- bis 16-Jährige in Zürich und im Aargau – mit Felipe und mit Programmen für zuhause.",
   robots: { index: true, follow: true },
 };
 
@@ -25,7 +25,7 @@ const STEPS = [
 const FAQ = [
   {
     q: "Für welches Alter ist das Angebot?",
-    a: "Für Kinder und Jugendliche, die im Verein spielen – vom Kinderfussball bis zu den Junioren. Der Spieler-Check zeigt, welches Niveau passt.",
+    a: "Für Kinder und Jugendliche von 6 bis 16 Jahren. Der Spieler-Check zeigt, welches Niveau zu Ihrem Kind passt.",
   },
   {
     q: "Braucht mein Kind spezielles Material?",
@@ -33,7 +33,11 @@ const FAQ = [
   },
   {
     q: "Wo findet das Training mit Felipe statt?",
-    a: "Einzel- und Gruppentrainings finden in der Schweiz statt. Ort, Zeit und Preis besprechen Sie direkt mit Felipe per WhatsApp.",
+    a: "In der Region Zürich und im Aargau. Den genauen Ort und die Zeit vereinbaren Sie direkt mit Felipe per WhatsApp.",
+  },
+  {
+    q: "Was kostet ein Probetraining?",
+    a: "CHF 30 für das Probetraining plus Fahrkosten: CHF 30 in der Region Zürich, CHF 20 im Aargau.",
   },
   {
     q: "Ist ein Programm ein Abo?",
@@ -60,7 +64,7 @@ export default async function Home() {
       </header>
 
       <section className="pb-14 pt-10 sm:pb-20 sm:pt-16" aria-labelledby="hero-title">
-        <p className="eyebrow mb-4">Positionstraining · Schweiz</p>
+        <p className="eyebrow mb-4">Positionstraining · Zürich &amp; Aargau</p>
         <h1 id="hero-title" className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl" style={{ fontStretch: "80%" }}>
           Wie fit ist Ihr Kind für die <span className="text-gold">Rückrunde?</span>
         </h1>
