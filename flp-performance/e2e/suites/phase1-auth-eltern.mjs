@@ -31,6 +31,8 @@ const suite = () =>
     const parentA = await ctx(true);
     await register(parentA, "Anna Beispiel", "eltern-a@flp.test");
     check(await seen(parentA.getByText("Noch kein Kind verknüpft")), "Elternteil ohne Kind sieht Leerzustand");
+    check(await seen(parentA.getByRole("link", { name: "Check starten" })), "Leerer Elternbereich bietet den Spieler-Check an");
+    check(await seen(parentA.getByRole("link", { name: "Programme ansehen" })), "Leerer Elternbereich bietet die Programme an");
 
     // D: Admin verknüpft bestehendes Konto
     await admin.goto(playerUrl);

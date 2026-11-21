@@ -10,6 +10,8 @@ import { PageHeader, EmptyState, Badge, Alert } from "@/components/ui/Feedback";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { PlayerOverview } from "@/components/player/PlayerOverview";
 import { recordConsent } from "./actions";
+import { whatsappNumber } from "@/lib/wochenfrage";
+import { StartPaths } from "@/components/marketing/StartPaths";
 
 export const metadata: Metadata = { title: "Elternbereich" };
 
@@ -49,11 +51,13 @@ export default async function ParentDashboard() {
       />
 
       {players.length === 0 ? (
-        <EmptyState
-          title="Noch kein Kind verknüpft"
-          text="Nach dem ersten Training verknüpft der Trainer dein Konto mit dem Spielerprofil deines Kindes. Danach erscheinen hier Trainingspläne und Entwicklung. Digitale Programme kannst du jederzeit separat kaufen."
-          action={<ButtonLink href="/programme" variant="secondary">Programme ansehen</ButtonLink>}
-        />
+        <div className="space-y-8">
+          <EmptyState
+            title="Noch kein Kind verknüpft"
+            text="Sind Sie bereits im Training bei Felipe? Dann verknüpft er Ihr Konto mit dem Spielerprofil Ihres Kindes, und hier erscheinen Trainingspläne und Entwicklung. Noch nicht dabei? Hier können Sie starten:"
+          />
+          <StartPaths coachPhone={whatsappNumber(process.env.WOCHENFRAGE_WHATSAPP)} />
+        </div>
       ) : (
         <div className="space-y-14">
           {players.map((player, i) => {

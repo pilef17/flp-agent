@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </p>
         <p>
           Noch kein Konto?{" "}
-          <Link href="/registrieren" className="text-gold underline underline-offset-4 hover:text-paper">
+          <Link href={next ? `/registrieren?next=${encodeURIComponent(next)}` : "/registrieren"} className="text-gold underline underline-offset-4 hover:text-paper">
             Jetzt registrieren
           </Link>
         </p>

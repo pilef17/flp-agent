@@ -15,6 +15,17 @@ const suite = () =>
       await page.getByRole("button", { name: "Ergebnis anzeigen" }).click();
     };
 
+    // Startseite: drei Einstiege für neue Familien
+    const home = await phone();
+    await home.goto(`${BASE}/`);
+    check(await seen(home.getByRole("heading", { name: "Spieler-Check" })), "Startseite: Spieler-Check als Einstieg");
+    check(await seen(home.getByRole("link", { name: "Programme ansehen" })), "Startseite: Link zu den Programmen");
+    const homeAxe = await new AxeBuilder({ page: home }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    check(homeAxe.violations.length === 0, `Startseite barrierefrei${homeAxe.violations.length ? `: ${homeAxe.violations.map((v) => v.id).join(", ")}` : ""}`);
+    await home.getByRole("link", { name: "Check starten" }).tap();
+    await home.waitForURL("**/check");
+    check(home.url().endsWith("/check"), "Startseite führt zum Spieler-Check");
+
     const p = await phone();
     await p.goto(`${BASE}/check`);
     check(p.url().endsWith("/check"), "Check öffnet ohne Login");
