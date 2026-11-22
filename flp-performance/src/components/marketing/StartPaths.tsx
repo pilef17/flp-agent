@@ -9,8 +9,17 @@ type Path = { href: string; eyebrow: string; title: string; text: string; cta: s
  * Die drei Einstiege für neue Familien: Spieler-Check, digitale Programme, Probetraining.
  * Wird auf der Startseite und im leeren Elternbereich gezeigt.
  */
-export function StartPaths({ coachPhone, headingLevel = 2 }: { coachPhone: string | null; headingLevel?: 2 | 3 }) {
-  const paths: Path[] = [
+export function StartPaths({
+  coachPhone,
+  headingLevel = 2,
+  showCheck = true,
+}: {
+  coachPhone: string | null;
+  headingLevel?: 2 | 3;
+  /** false: Check steht bereits prominent auf der Seite, hier nur die weiteren Wege */
+  showCheck?: boolean;
+}) {
+  const all: Path[] = [
     {
       href: "/check",
       eyebrow: "Kostenlos · 3 Minuten",
@@ -27,12 +36,13 @@ export function StartPaths({ coachPhone, headingLevel = 2 }: { coachPhone: strin
       cta: "Programme ansehen",
     },
   ];
+  const paths = showCheck ? all : all.filter((p) => p.href !== "/check");
   if (coachPhone) {
     paths.push({
       href: `https://wa.me/${coachPhone}?text=${encodeURIComponent(PROBETRAINING_TEXT)}`,
       eyebrow: "Einzel- oder Gruppentraining",
       title: "Probetraining mit Felipe",
-      text: "Positionsspezifisches Training in der Schweiz. Schreiben Sie per WhatsApp für einen Termin.",
+      text: "Positionsspezifisches Training in Zürich und im Aargau, für 6- bis 16-Jährige. Schreiben Sie per WhatsApp für einen Termin.",
       cta: "Per WhatsApp anfragen",
       external: true,
     });

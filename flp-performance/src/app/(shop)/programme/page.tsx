@@ -9,7 +9,11 @@ import { ProductCover } from "@/components/shop/ProductCover";
 import { PositionPicker, type PositionOffer } from "@/components/shop/PositionPicker";
 import { isPositionProduct } from "@/lib/positions";
 
-export const metadata: Metadata = { title: "Programme" };
+export const metadata: Metadata = {
+  title: "Programme",
+  description: "Trainingsprogramme nach Position für zuhause – Schritt für Schritt erklärt, Einmalzahlung, kein Abo.",
+  robots: { index: true, follow: true },
+};
 
 export default async function ProgramsPage() {
   const viewer = await getViewer();
