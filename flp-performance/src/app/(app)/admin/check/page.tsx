@@ -16,6 +16,7 @@ type Lead = {
   email: string;
   child_age: number | null;
   position: string;
+  team: string;
   level: Level;
   score: number;
   technik: number;
@@ -31,7 +32,7 @@ export default async function CheckLeadsPage() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("check_leads")
-    .select("id, parent_name, email, child_age, position, level, score, technik, taktik, answers, created_at")
+    .select("id, parent_name, email, child_age, position, team, level, score, technik, taktik, answers, created_at")
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw new Error(error.message);
@@ -79,6 +80,7 @@ export default async function CheckLeadsPage() {
                         {dateFmt.format(new Date(lead.created_at))}
                         {lead.child_age ? ` · Kind ${lead.child_age} Jahre` : ""}
                         {lead.position ? ` · ${lead.position}` : ""}
+                        {lead.team ? ` · ${lead.team}` : ""}
                       </p>
                     </div>
                     <div className="text-right">

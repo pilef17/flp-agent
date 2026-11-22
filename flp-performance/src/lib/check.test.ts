@@ -50,10 +50,11 @@ describe("Spieler-Check", () => {
 describe("Benachrichtigung an den Trainer", () => {
   it("enthält Kontakt, Niveau und Trainingsfelder", () => {
     const r = evaluate([...QUESTIONS.slice(0, 6).map(() => 2), ...QUESTIONS.slice(6).map(() => 0)]);
-    const m = leadNotification({ parentName: "Anna Muster", email: "anna@example.ch", childAge: 11, position: "Flügel" }, r, "https://flp.example");
+    const m = leadNotification({ parentName: "Anna Muster", email: "anna@example.ch", childAge: 11, position: "Flügel", team: "FC Baden D" }, r, "https://flp.example");
     expect(m.subject).toBe("Neue Anfrage Spieler-Check: Anna Muster – Mittel");
     expect(m.text).toContain("E-Mail: anna@example.ch");
     expect(m.text).toContain("Kind: 11 Jahre, Flügel");
+    expect(m.text).toContain("Verein / Team: FC Baden D");
     expect(m.text).toContain("Mittel (12/24");
     expect(m.text).toContain("Schulterblick");
     expect(m.text).toContain("https://flp.example/admin/check");

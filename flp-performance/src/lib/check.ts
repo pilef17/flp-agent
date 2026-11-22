@@ -172,7 +172,7 @@ export function checkMessage(r: CheckResult): string {
     .join("\n");
 }
 
-export type LeadInfo = { parentName: string; email: string; childAge: number | null; position: string };
+export type LeadInfo = { parentName: string; email: string; childAge: number | null; position: string; team?: string };
 
 /** E-Mail an den Trainer bei einer neuen Kontaktanfrage aus dem Check (reiner Text, ohne Antwortdetails). */
 export function leadNotification(lead: LeadInfo, r: CheckResult, siteUrl: string): { subject: string; text: string } {
@@ -184,6 +184,7 @@ export function leadNotification(lead: LeadInfo, r: CheckResult, siteUrl: string
     `Name: ${lead.parentName}`,
     `E-Mail: ${lead.email}`,
     `Kind: ${child || "keine Angabe"}`,
+    `Verein / Team: ${lead.team || "keine Angabe"}`,
     ``,
     `Niveau: ${LEVELS[r.level].label} (${r.score}/24 · Technik ${r.technik}/12 · Taktik ${r.taktik}/12)`,
     `Jetzt trainieren: ${r.focus.length ? r.focus.join(", ") : "überall volle Punktzahl"}`,

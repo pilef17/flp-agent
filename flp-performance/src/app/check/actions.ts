@@ -11,7 +11,7 @@ export type LeadState = {
   ok?: boolean;
   message?: string;
   errors?: { parentName?: string; email?: string; childAge?: string; consent?: string };
-  values?: { parentName: string; email: string; childAge: string; position: string };
+  values?: { parentName: string; email: string; childAge: string; position: string; team: string };
 };
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -24,6 +24,7 @@ const schema = z.object({
     z.coerce.number({ error: "Bitte eine Zahl eingeben." }).int().min(4, "Alter: 4 bis 20 Jahre.").max(20, "Alter: 4 bis 20 Jahre.").nullable(),
   ),
   position: z.string().transform(clean).pipe(z.string().max(40, "Höchstens 40 Zeichen.")),
+  team: z.string().transform(clean).pipe(z.string().max(60, "Höchstens 60 Zeichen.")),
   consent: z.literal("on", { error: "Bitte stimmen Sie der Kontaktaufnahme zu." }),
   answers: z.string(),
   website: z.string().optional(), // Honeypot für Bots – Menschen sehen das Feld nicht
@@ -33,7 +34,7 @@ const schema = z.object({
 export async function submitLead(_: LeadState, formData: FormData): Promise<LeadState> {
   const raw = Object.fromEntries(formData);
   const text = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : "");
-  const values = { parentName: text("parentName"), email: text("email"), childAge: text("childAge"), position: text("position") };
+  const values = { parentName: text("parentName"), email: text("email"), childAge: text("childAge"), position: text("position"), team: text("team") };
   const parsed = schema.safeParse({ ...values, consent: raw.consent ?? "", answers: text("answers"), website: text("website") });
   if (!parsed.success) {
     const errors: LeadState["errors"] = {};
@@ -60,6 +61,7 @@ export async function submitLead(_: LeadState, formData: FormData): Promise<Lead
     email: parsed.data.email,
     child_age: parsed.data.childAge,
     position: parsed.data.position,
+    team: parsed.data.team,
     level: r.level,
     score: r.score,
     technik: r.technik,

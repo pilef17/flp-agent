@@ -66,6 +66,7 @@ const suite = () =>
     await p.fill("#lead-email", "Anna.Muster@Test.invalid");
     await p.fill("#lead-age", "11");
     await p.fill("#lead-position", "Stürmer");
+    await p.fill("#lead-team", "FC Test D-Junioren");
     await p.getByRole("button", { name: "Feedback anfordern" }).click();
     check(await seen(p.getByText("Bitte stimmen Sie der Kontaktaufnahme zu.")), "Ohne Zustimmung nichts gespeichert");
     check(await p.inputValue("#lead-email") === "Anna.Muster@Test.invalid", "Eingaben bleiben erhalten");
@@ -76,10 +77,10 @@ const suite = () =>
     check(await seen(p.getByText("Danke! Felipe meldet sich in den nächsten Tagen bei Ihnen.")), "Anfrage gesendet");
     const note = await mailText("trainer@flp.test", tLead);
     check(
-      note.includes("E-Mail: anna.muster@test.invalid") && note.includes("Niveau: Mittel (12/24") && /Reply-To: anna\.muster@test\.invalid/i.test(note),
+      note.includes("E-Mail: anna.muster@test.invalid") && note.includes("Verein / Team: FC Test D-Junioren") && note.includes("Niveau: Mittel (12/24") && /Reply-To: anna\.muster@test\.invalid/i.test(note),
       "Trainer erhält E-Mail mit Kontakt und Ergebnis (Antwort geht an die Familie)",
     );
-    check(sql(`select email || '|' || level || '|' || score || '|' || technik || '|' || child_age from public.check_leads`) === "anna.muster@test.invalid|mittel|12|12|11", "Anfrage gespeichert, Ergebnis serverseitig berechnet");
+    check(sql(`select email || '|' || level || '|' || score || '|' || technik || '|' || child_age || '|' || team from public.check_leads`) === "anna.muster@test.invalid|mittel|12|12|11|FC Test D-Junioren", "Anfrage gespeichert, Ergebnis serverseitig berechnet");
 
     // Trainer-Panel
     const admin = await ctx();

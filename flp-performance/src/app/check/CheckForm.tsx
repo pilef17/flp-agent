@@ -239,6 +239,7 @@ function LeadForm({ answers }: { answers: number[] }) {
         <Field id="lead-age" label="Alter des Kindes" name="childAge" type="number" inputMode="numeric" min={4} max={20} defaultValue={v?.childAge} error={e.childAge} />
         <Field id="lead-position" label="Position (optional)" name="position" defaultValue={v?.position} />
       </div>
+      <Field id="lead-team" label="Verein / Team (optional)" name="team" autoComplete="off" defaultValue={v?.team} />
       <div className="space-y-1.5">
         <label className="flex items-start gap-3 text-sm text-mute">
           <input type="checkbox" name="consent" className="mt-1 size-4 shrink-0 accent-gold" aria-invalid={e.consent ? true : undefined} />
