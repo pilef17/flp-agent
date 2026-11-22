@@ -79,7 +79,9 @@ export default function PrivacyPolicyPage() {
         <h2>Kinder</h2>
         <p>
           Profile von Kindern sehen nur der Trainer und die verknüpften Erziehungsberechtigten. Es gibt keine öffentlichen
-          Profile. Videos werden nur mit Einwilligung der Eltern aufgenommen und ausschliesslich privat in der App bereitgestellt.
+          Profile. Videos werden nur mit Einwilligung der Eltern aufgenommen und ausschliesslich privat in der App bereitgestellt. Fotos oder
+          Videos eines Kindes erscheinen auf der Website nur, wenn die Eltern dafür eigens eingewilligt haben – mit Vornamen, ohne
+          weitere Angaben. Nach einem Widerruf entfernen wir die Bilder innert 30 Tagen.
           Einwilligungen kannst du jederzeit unter{" "}
           <Link href="/elternbereich">Elternbereich</Link> widerrufen.
         </p>

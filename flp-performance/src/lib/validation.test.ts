@@ -64,3 +64,12 @@ describe("Wochenstruktur", () => {
     expect(Object.keys(errors)).toEqual(["title_3"]);
   });
 });
+
+describe("Einwilligungsarten", () => {
+  it("kennt alle Einwilligungen aus den Texten", async () => {
+    const { CONSENT_LABELS } = await import("./consent");
+    for (const t of Object.keys(CONSENT_LABELS)) {
+      expect(consentSchema.safeParse({ playerId: crypto.randomUUID(), consentType: t, granted: "true" }).success).toBe(true);
+    }
+  });
+});

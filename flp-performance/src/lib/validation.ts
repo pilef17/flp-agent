@@ -75,7 +75,7 @@ export const privacyRequestSchema = z.object({
 
 export const consentSchema = z.object({
   playerId: z.guid(),
-  consentType: z.enum(["data_processing", "video_recording", "player_account"]),
+  consentType: z.enum(["data_processing", "video_recording", "website_media", "player_account"]),
   granted: z.enum(["true", "false"]).transform((v) => v === "true"),
 });
 

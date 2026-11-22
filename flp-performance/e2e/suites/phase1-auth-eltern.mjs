@@ -67,6 +67,17 @@ const suite = () =>
     check(await parentA.getByText("Bitte bestätige unten die Einwilligung").count() === 0, "Einwilligung erteilt, Hinweis verschwindet");
     check(sql(`select count(*) from public.guardian_consents where player_id='${playerId}'`) === "1", "Einwilligung in DB protokolliert");
 
+    // Website-Fotos: Eltern schalten selbst ein und wieder aus
+    const web = parentA.locator("li", { hasText: "Fotos und Videos auf der Website" });
+    await web.getByRole("button", { name: "Einwilligen" }).click();
+    await web.getByText("Erteilt").waitFor();
+    await web.getByRole("button", { name: "Widerrufen" }).click();
+    await web.getByText("Widerrufen", { exact: true }).first().waitFor();
+    check(
+      sql(`select string_agg(granted::text, ',' order by created_at) from public.guardian_consents where player_id='${playerId}' and consent_type='website_media'`) === "true,false",
+      "Website-Fotos: Einwilligung erteilt und widerrufen, beides protokolliert",
+    );
+
     // G: Echte Testdaten via SQL (Beurteilungs-UI folgt in Phase 3) → Anzeige prüfen
     const adminId = sql(`select id from auth.users where email='admin@flp.test'`);
     const monday = (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();

@@ -1,5 +1,5 @@
 /** Version der Datenschutz-/Einwilligungstexte. Bei Textänderungen erhöhen. */
-export const POLICY_VERSION = "2026-10";
+export const POLICY_VERSION = "2026-11";
 
 export const CONSENT_LABELS = {
   data_processing: {
@@ -9,6 +9,10 @@ export const CONSENT_LABELS = {
   video_recording: {
     title: "Trainingsvideos",
     text: "Ich willige ein, dass im Training Videos meines Kindes aufgenommen und ausschliesslich privat in der App für mich und den Trainer bereitgestellt werden. Keine Veröffentlichung.",
+  },
+  website_media: {
+    title: "Fotos und Videos auf der Website",
+    text: "Ich willige ein, dass FLP Performance Fotos oder kurze Trainingsvideos meines Kindes auf der Website flp-performance.ch zeigt – nur mit Vornamen, ohne weitere Angaben. Ich kann die Einwilligung jederzeit widerrufen; die Bilder werden dann innert 30 Tagen entfernt.",
   },
   player_account: {
     title: "Eigenes Login für mein Kind",

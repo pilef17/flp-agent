@@ -327,6 +327,9 @@ select tests.logout();
 select tests.login('00000000-0000-0000-0000-0000000000a1');
 insert into public.guardian_consents (guardian_id, player_id, consent_type, granted, policy_version)
   values ('00000000-0000-0000-0000-0000000000a1', '10000000-0000-0000-0000-000000000001', 'video_recording', true, '2026-10');
+select tests.allowed($$insert into public.guardian_consents (guardian_id, player_id, consent_type, granted, policy_version)
+  values ('00000000-0000-0000-0000-0000000000a1', '10000000-0000-0000-0000-000000000001', 'website_media', true, '2026-11')$$,
+  'Eltern können Website-Fotos erlauben');
 select tests.logout();
 select tests.login('00000000-0000-0000-0000-00000000000c');
 select tests.allowed($$insert into storage.objects (bucket_id, name)
