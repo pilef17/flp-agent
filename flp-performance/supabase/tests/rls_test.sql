@@ -355,6 +355,12 @@ select tests.denied($$insert into public.player_month_status (player_id, month, 
 select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
   values ('10000000-0000-0000-0000-000000000001', '2027-03-15', true, '00000000-0000-0000-0000-0000000000a1')$$,
   'Monat muss am 1. beginnen');
+select tests.allowed($$insert into public.player_month_status (player_id, month, active, dates, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-04-01', true, '{2027-04-07,2027-04-14}', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Eltern wählen Wunschtermine');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, reason, dates, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-05-01', false, 'ferien', '{2027-05-05}', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Keine Wunschtermine bei einer Pause');
 select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
   values ('10000000-0000-0000-0000-000000000002', '2026-12-01', true, '00000000-0000-0000-0000-0000000000a1')$$,
   'Kein Monatsstatus für fremde Kinder');
@@ -367,7 +373,7 @@ select tests.login('00000000-0000-0000-0000-0000000000b1');
 select tests.eq((select count(*) from public.player_month_status), 0, 'Fremde Eltern sehen den Monatsstatus nicht');
 select tests.logout();
 select tests.login('00000000-0000-0000-0000-00000000000c');
-select tests.eq((select count(*) from public.player_month_status), 1, 'Coach sieht den Monatsstatus seines Spielers');
+select tests.eq((select count(*) from public.player_month_status), 2, 'Coach sieht den Monatsstatus seines Spielers');
 select tests.logout();
 select tests.anon();
 select tests.denied($$select 1 from public.player_month_status$$, 'Anonym: kein Monatsstatus');

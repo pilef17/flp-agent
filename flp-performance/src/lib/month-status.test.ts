@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentMonth, monthLabel, monthOf, monthStatusNotification, monthStatusSchema, parseMonthParam, shiftMonth, statusLabel } from "./month-status";
+import { currentMonth, dayLabel, daysOfMonth, monthLabel, monthOf, monthStatusNotification, monthStatusSchema, parseMonthParam, shiftMonth, statusLabel } from "./month-status";
 
 const id = "00000000-0000-4000-8000-000000000001";
 
@@ -37,5 +37,30 @@ describe("Monatsplanung", () => {
     expect(m.subject).toBe("Monatsstatus Dezember 2026: Luca Test – Pausiert · Verletzung");
     expect(m.text).toContain("Bemerkung: Knie");
     expect(m.text).toContain("https://flp.example/admin/monat?m=2026-12");
+  });
+});
+
+describe("Wunschtermine", () => {
+  it("listet die Tage eines Monats", () => {
+    expect(daysOfMonth("2026-12-01")).toHaveLength(31);
+    expect(daysOfMonth("2027-02-01")).toHaveLength(28);
+    expect(dayLabel("2026-12-03")).toBe("Do 03.12.");
+  });
+  it("übernimmt nur Tage aus dem Monat, sortiert und ohne Doppel", () => {
+    const r = monthStatusSchema.parse({ playerId: id, month: "2026-12-01", active: "true", dates: "2026-12-10,2026-12-03,2026-12-10" });
+    expect(r.dates).toEqual(["2026-12-03", "2026-12-10"]);
+    expect(monthStatusSchema.safeParse({ playerId: id, month: "2026-12-01", active: "true", dates: "2027-01-05" }).success).toBe(false);
+    expect(monthStatusSchema.safeParse({ playerId: id, month: "2026-12-01", active: "true", dates: "2026-12-32" }).success).toBe(false);
+  });
+  it("verwirft Termine bei einer Pause", () => {
+    const r = monthStatusSchema.parse({ playerId: id, month: "2026-12-01", active: "false", reason: "ferien", dates: "2026-12-03" });
+    expect(r.dates).toEqual([]);
+  });
+  it("nennt die Termine in der E-Mail", () => {
+    const m = monthStatusNotification(
+      { playerName: "Luca", parentName: "Anna", month: "2026-12-01", active: true, reason: "", note: "", dates: ["2026-12-03"] },
+      "x",
+    );
+    expect(m.text).toContain("Wunschtermine: Do 03.12.");
   });
 });

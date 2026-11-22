@@ -33,12 +33,12 @@ export async function setMonthStatus(_: MonthStatusState, formData: FormData): P
   const viewer = await requireViewer();
   const parsed = monthStatusSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Ungültige Angaben." };
-  const { playerId, month, active, reason, note } = parsed.data;
+  const { playerId, month, active, reason, note, dates } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase
     .from("player_month_status")
     .upsert(
-      { player_id: playerId, month, active, reason, note, set_by: viewer.id, updated_at: new Date().toISOString() },
+      { player_id: playerId, month, active, reason, note, dates, set_by: viewer.id, updated_at: new Date().toISOString() },
       { onConflict: "player_id,month" },
     );
   if (error) return { error: "Das hat leider nicht geklappt. Bitte später erneut versuchen." };
@@ -52,6 +52,7 @@ export async function setMonthStatus(_: MonthStatusState, formData: FormData): P
       active,
       reason,
       note,
+      dates,
     },
     publicEnv.siteUrl(),
   );

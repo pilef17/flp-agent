@@ -1,4 +1,5 @@
--- FLP Performance – Monatsplanung: Eltern melden pro Monat, ob ihr Kind aktiv trainiert oder pausiert.
+-- FLP Performance – Monatsplanung: Eltern melden pro Monat, ob ihr Kind aktiv trainiert oder pausiert,
+-- und wählen die Tage, an denen sie ein Training wünschen.
 -- Rein informativ für den Trainer; der Coaching-Zugang wird weiterhin nur vom Trainer gesteuert.
 
 create table public.player_month_status (
@@ -8,10 +9,13 @@ create table public.player_month_status (
   active boolean not null,
   reason text not null default '' check (reason in ('', 'ferien', 'verletzung', 'schule', 'anderes')),
   note text not null default '' check (char_length(note) <= 200),
+  -- Wunschtermine der Eltern für Trainings in diesem Monat (nur bei aktiv)
+  dates date[] not null default '{}' check (cardinality(dates) <= 31),
   set_by uuid references public.profiles (id) on delete set null,
   updated_at timestamptz not null default now(),
   unique (player_id, month),
-  check (active or reason <> '')
+  check (active or reason <> ''),
+  check (active or cardinality(dates) = 0)
 );
 create index player_month_status_month_idx on public.player_month_status (month);
 

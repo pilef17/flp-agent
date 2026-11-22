@@ -47,7 +47,7 @@ export default async function ParentDashboard() {
   const { data: monthRows } = players.length
     ? await supabase
         .from("player_month_status")
-        .select("player_id, month, active, reason, note")
+        .select("player_id, month, active, reason, note, dates")
         .in("player_id", players.map((p) => p.id))
         .in("month", months)
     : { data: [] };
