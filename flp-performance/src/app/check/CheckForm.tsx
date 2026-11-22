@@ -19,6 +19,8 @@ type Props = {
 };
 
 const AREA_LABEL = { technik: "Technik", taktik: "Taktik" } as const;
+/** Ergebnis kurz halten, damit das Angebot schnell sichtbar ist */
+const MAX_STRENGTHS = 4;
 
 export function CheckForm({ offers, coachPhone }: Props) {
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null));
@@ -146,9 +148,12 @@ function Result({
           <h3 className="eyebrow mb-2">Stärken</h3>
           {result.strengths.length ? (
             <ul className="list-disc space-y-1 pl-5 text-sm">
-              {result.strengths.map((s) => (
+              {result.strengths.slice(0, MAX_STRENGTHS).map((s) => (
                 <li key={s}>{s}</li>
               ))}
+              {result.strengths.length > MAX_STRENGTHS && (
+                <li className="list-none text-mute">+ {result.strengths.length - MAX_STRENGTHS} weitere</li>
+              )}
             </ul>
           ) : (
             <p className="text-sm text-mute">Noch keine Bereiche mit voller Punktzahl – genau hier hilft gezieltes Training.</p>
@@ -234,6 +239,7 @@ function LeadForm({ answers }: { answers: number[] }) {
         <Field id="lead-age" label="Alter des Kindes" name="childAge" type="number" inputMode="numeric" min={4} max={20} defaultValue={v?.childAge} error={e.childAge} />
         <Field id="lead-position" label="Position (optional)" name="position" defaultValue={v?.position} />
       </div>
+      <Field id="lead-team" label="Verein / Team (optional)" name="team" autoComplete="off" defaultValue={v?.team} />
       <div className="space-y-1.5">
         <label className="flex items-start gap-3 text-sm text-mute">
           <input type="checkbox" name="consent" className="mt-1 size-4 shrink-0 accent-gold" aria-invalid={e.consent ? true : undefined} />

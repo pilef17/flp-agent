@@ -171,3 +171,26 @@ export function checkMessage(r: CheckResult): string {
     .filter(Boolean)
     .join("\n");
 }
+
+export type LeadInfo = { parentName: string; email: string; childAge: number | null; position: string; team?: string };
+
+/** E-Mail an den Trainer bei einer neuen Kontaktanfrage aus dem Check (reiner Text, ohne Antwortdetails). */
+export function leadNotification(lead: LeadInfo, r: CheckResult, siteUrl: string): { subject: string; text: string } {
+  const child = [lead.childAge ? `${lead.childAge} Jahre` : null, lead.position || null].filter(Boolean).join(", ");
+  const subject = `Neue Anfrage Spieler-Check: ${lead.parentName} – ${LEVELS[r.level].label}`.replace(/[\r\n]+/g, " ");
+  const text = [
+    `Neue Kontaktanfrage aus dem Spieler-Check.`,
+    ``,
+    `Name: ${lead.parentName}`,
+    `E-Mail: ${lead.email}`,
+    `Kind: ${child || "keine Angabe"}`,
+    `Verein / Team: ${lead.team || "keine Angabe"}`,
+    ``,
+    `Niveau: ${LEVELS[r.level].label} (${r.score}/24 · Technik ${r.technik}/12 · Taktik ${r.taktik}/12)`,
+    `Jetzt trainieren: ${r.focus.length ? r.focus.join(", ") : "überall volle Punktzahl"}`,
+    ``,
+    `Antworten Sie direkt auf diese E-Mail, um die Familie zu kontaktieren.`,
+    `Alle Anfragen: ${siteUrl}/admin/check`,
+  ].join("\n");
+  return { subject, text };
+}

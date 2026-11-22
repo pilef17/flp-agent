@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
         <p>
           Den kostenlosen Spieler-Check unter <Link href="/check">/check</Link> beantworten Eltern ohne Anmeldung. Die Antworten werden
           nur im Browser ausgewertet und nicht gespeichert. Nur wer am Ende freiwillig Kontaktdaten sendet und der Kontaktaufnahme
-          zustimmt, übermittelt uns Name, E-Mail-Adresse, optional Alter und Position des Kindes sowie das Ergebnis des Checks. Wir
+          zustimmt, übermittelt uns Name, E-Mail-Adresse, optional Alter, Position und Verein des Kindes sowie das Ergebnis des Checks. Wir
           nutzen diese Angaben ausschliesslich, um uns zum Ergebnis zu melden, und löschen sie spätestens nach 12 Monaten oder
           früher auf Wunsch.
         </p>

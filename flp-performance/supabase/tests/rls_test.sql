@@ -557,6 +557,8 @@ select tests.denied($$insert into public.check_leads (parent_name, email, level,
   values ('X Y', 'x@test.invalid', 'mittel', 12, 6, 6, '{1,1}', now())$$, 'Check: genau 12 Antworten');
 select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
   values ('X Y', 'X@Test.invalid', 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: E-Mail klein geschrieben');
+select tests.denied($$insert into public.check_leads (parent_name, email, team, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', repeat('x', 61), 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: Verein höchstens 60 Zeichen');
 select tests.anon();
 select tests.denied($$select 1 from public.check_leads$$, 'Check: anonym nicht lesbar');
 select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
