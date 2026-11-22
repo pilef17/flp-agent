@@ -54,6 +54,9 @@ export default async function AdminDashboard() {
             <ButtonLink href="/admin/check" variant="secondary">
               Spieler-Check
             </ButtonLink>
+            <ButtonLink href="/admin/agenda" variant="secondary">
+              Agenda
+            </ButtonLink>
             <ButtonLink href="/admin/monat" variant="secondary">
               Monatsplanung
             </ButtonLink>

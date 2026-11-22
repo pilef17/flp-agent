@@ -1,6 +1,6 @@
 // Monatsplanung: Eltern melden pro Monat, ob ihr Kind aktiv trainiert oder pausiert.
 import { z } from "zod";
-import { addDays, isIsoDate, shortDate, todayInSwitzerland } from "@/lib/dates";
+import { todayInSwitzerland } from "@/lib/dates";
 
 export const PAUSE_REASONS = {
   ferien: "Ferien",
@@ -38,23 +38,6 @@ export function parseMonthParam(v: string | undefined | null): string | null {
   return v && /^\d{4}-(0[1-9]|1[0-2])$/.test(v) ? `${v}-01` : null;
 }
 
-/** Alle Tage eines Monats (YYYY-MM-DD). */
-export function daysOfMonth(month: string): string[] {
-  const out: string[] = [];
-  for (let d = month; d.slice(0, 7) === month.slice(0, 7); d = addDays(d, 1)) out.push(d);
-  return out;
-}
-
-const WEEKDAY_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
-export function weekdayShort(date: string): string {
-  return WEEKDAY_SHORT[new Date(`${date}T00:00:00Z`).getUTCDay()];
-}
-
-/** «Mi 03.12.» */
-export function dayLabel(date: string): string {
-  return `${weekdayShort(date)} ${shortDate(date)}`;
-}
-
 export const monthStatusSchema = z
   .object({
     playerId: z.guid(),
@@ -62,16 +45,9 @@ export const monthStatusSchema = z
     active: z.enum(["true", "false"]).transform((v) => v === "true"),
     reason: z.enum(["", "ferien", "verletzung", "schule", "anderes"]).optional().default(""),
     note: z.string().trim().max(200).optional().default(""),
-    /** Kommagetrennte Wunschtermine, z. B. «2026-12-03,2026-12-10» */
-    dates: z.string().max(400).optional().default(""),
   })
-  .transform((v) => ({ ...v, dates: [...new Set(v.dates.split(",").map((d) => d.trim()).filter(Boolean))].sort() }))
   .refine((v) => v.active || v.reason !== "", { message: "Bitte einen Grund wählen.", path: ["reason"] })
-  .refine((v) => v.dates.every((d) => isIsoDate(d) && d.slice(0, 7) === v.month.slice(0, 7)), {
-    message: "Bitte nur Tage aus diesem Monat wählen.",
-    path: ["dates"],
-  })
-  .transform((v) => (v.active ? { ...v, reason: "" as const, note: "" } : { ...v, dates: [] as string[] }));
+  .transform((v) => (v.active ? { ...v, reason: "" as const, note: "" } : v));
 
 export function statusLabel(s: { active: boolean; reason: string } | null | undefined): string {
   if (!s) return "Offen";
@@ -80,7 +56,7 @@ export function statusLabel(s: { active: boolean; reason: string } | null | unde
 
 /** E-Mail an den Trainer, wenn Eltern einen Status melden. */
 export function monthStatusNotification(
-  m: { playerName: string; parentName: string; month: string; active: boolean; reason: string; note: string; dates?: string[] },
+  m: { playerName: string; parentName: string; month: string; active: boolean; reason: string; note: string },
   siteUrl: string,
 ): { subject: string; text: string } {
   const label = statusLabel(m);
@@ -91,7 +67,6 @@ export function monthStatusNotification(
     `Spieler: ${m.playerName}`,
     `Status: ${label}`,
     ...(m.note ? [`Bemerkung: ${m.note}`] : []),
-    ...(m.active ? [`Wunschtermine: ${m.dates?.length ? m.dates.map(dayLabel).join(", ") : "noch keine"}`] : []),
     ``,
     `Monatsplanung: ${siteUrl}/admin/monat?m=${m.month.slice(0, 7)}`,
   ].join("\n");

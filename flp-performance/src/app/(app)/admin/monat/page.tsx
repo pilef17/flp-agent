@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
-import { currentMonth, dayLabel, monthLabel, parseMonthParam, shiftMonth, statusLabel } from "@/lib/month-status";
+import { currentMonth, monthLabel, parseMonthParam, shiftMonth, statusLabel } from "@/lib/month-status";
 import { PageHeader, EmptyState, Badge } from "@/components/ui/Feedback";
 import { Card, CardTitle, Stat } from "@/components/ui/Card";
 import { ShareLink } from "../wochenfrage/ShareLink";
@@ -15,7 +15,7 @@ type Row = {
   first_name: string;
   last_name: string;
   coach_player_links: { status: string }[];
-  player_month_status: { month: string; active: boolean; reason: string; note: string; dates: string[]; updated_at: string }[];
+  player_month_status: { month: string; active: boolean; reason: string; note: string; updated_at: string }[];
 };
 
 const dateFmt = new Intl.DateTimeFormat("de-CH", { day: "2-digit", month: "2-digit", timeZone: "Europe/Zurich" });
@@ -28,7 +28,7 @@ export default async function MonthPlanningPage({ searchParams }: { searchParams
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("players")
-    .select("id, first_name, last_name, coach_player_links(status), player_month_status(month, active, reason, note, dates, updated_at)")
+    .select("id, first_name, last_name, coach_player_links(status), player_month_status(month, active, reason, note, updated_at)")
     .eq("is_archived", false)
     .eq("player_month_status.month", month)
     .order("last_name")
@@ -41,20 +41,16 @@ export default async function MonthPlanningPage({ searchParams }: { searchParams
   const paused = players.filter((p) => statusOf(p)?.active === false);
   const open = players.filter((p) => !statusOf(p));
   const ordered = [...open, ...paused, ...active];
-  // Wunschtermine nach Tag: wer möchte an welchem Tag trainieren?
-  const byDay = new Map<string, string[]>();
-  for (const p of active) for (const d of statusOf(p)?.dates ?? []) byDay.set(d, [...(byDay.get(d) ?? []), p.first_name]);
-  const days = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b));
   const label = monthLabel(month);
   const url = `${publicEnv.siteUrl()}/elternbereich`;
-  const reminder = `Hallo! Kurze Frage von FLP Performance zur Monatsplanung ${label}: Trainiert Ihr Kind diesen Monat mit? Bitte im Elternbereich «Aktiv» oder «Pausiert» wählen und die Wunschtermine eintragen: ${url}`;
+  const reminder = `Hallo! Kurze Frage von FLP Performance zur Monatsplanung ${label}: Trainiert Ihr Kind diesen Monat mit? Bitte im Elternbereich «Aktiv» oder «Pausiert» wählen – dauert 10 Sekunden: ${url}`;
 
   return (
     <>
       <PageHeader
         eyebrow="Trainer · privat"
         title="Monatsplanung"
-        text="Eltern melden pro Monat, ob ihr Kind aktiv trainiert oder pausiert, und wählen ihre Wunschtermine. Der Coaching-Zugang bleibt davon unberührt."
+        text="Eltern melden pro Monat, ob ihr Kind aktiv trainiert oder pausiert. Der Coaching-Zugang bleibt davon unberührt."
       />
 
       <nav aria-label="Monat wählen" className="mb-6 flex items-center justify-between gap-3">
@@ -88,7 +84,6 @@ export default async function MonthPlanningPage({ searchParams }: { searchParams
                       {p.first_name} {p.last_name}
                     </Link>
                     {s?.note && <p className="text-xs text-mute">«{s.note}»</p>}
-                    {s?.active && s.dates.length > 0 && <p className="text-xs text-mute">Termine: {s.dates.map(dayLabel).join(", ")}</p>}
                   </div>
                   <div className="flex items-center gap-2">
                     {s && <span className="text-xs text-mute">{dateFmt.format(new Date(s.updated_at))}</span>}
@@ -100,24 +95,6 @@ export default async function MonthPlanningPage({ searchParams }: { searchParams
           </ul>
         </Card>
       )}
-
-      <Card className="mb-8">
-        <CardTitle eyebrow="Wunschtermine" title="Wer möchte wann trainieren?" />
-        {days.length === 0 ? (
-          <p className="text-sm text-mute">Noch keine Wunschtermine für {label}.</p>
-        ) : (
-          <ul className="divide-y divide-line" data-testid="wunschtermine">
-            {days.map(([d, names]) => (
-              <li key={d} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
-                <span className="font-semibold tabular-nums">{dayLabel(d)}</span>
-                <span className="text-sm text-mute">
-                  {names.length} · {names.join(", ")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
 
       <Card>
         <CardTitle eyebrow="Erinnerung" title="Eltern per WhatsApp fragen" />

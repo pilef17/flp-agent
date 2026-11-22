@@ -30,17 +30,30 @@ export function notifyConfig() {
 export async function notifyCoach(msg: { subject: string; text: string; replyTo?: string }): Promise<boolean> {
   const cfg = notifyConfig();
   if (!cfg) return false;
+  return sendMail(cfg.to, msg);
+}
+
+/** Sendet eine Nachricht an eine Familie (Antworten gehen an den Trainer). */
+export async function notifyFamily(to: string, msg: { subject: string; text: string }): Promise<boolean> {
+  const cfg = notifyConfig();
+  if (!cfg || !to) return false;
+  return sendMail(to, { ...msg, replyTo: cfg.to });
+}
+
+async function sendMail(to: string, msg: { subject: string; text: string; replyTo?: string }): Promise<boolean> {
+  const cfg = notifyConfig();
+  if (!cfg) return false;
   try {
     await nodemailer.createTransport(cfg.transport).sendMail({
       from: `FLP Performance <${cfg.from}>`,
-      to: cfg.to,
+      to,
       replyTo: msg.replyTo,
       subject: msg.subject,
       text: msg.text,
     });
     return true;
   } catch (e) {
-    console.error("Benachrichtigung an den Trainer fehlgeschlagen:", e instanceof Error ? e.message : e);
+    console.error("E-Mail-Benachrichtigung fehlgeschlagen:", e instanceof Error ? e.message : e);
     return false;
   }
 }

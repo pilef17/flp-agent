@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
           </li>
           <li>
             <strong>Training:</strong> Trainingspläne, erledigte Einheiten, Beurteilungen, Feedback des Trainers, der monatliche
-            Trainingsstatus (aktiv oder pausiert, mit Grund, sowie gewünschte Trainingstage) und – nur mit Einwilligung – Trainingsvideos.
+            Trainingsstatus (aktiv oder pausiert, mit Grund) sowie Terminanfragen der Eltern (Tag, Wunschzeit, Ort) und – nur mit Einwilligung – Trainingsvideos.
           </li>
           <li>
             <strong>Einwilligungen:</strong> welche Einwilligung wann erteilt oder widerrufen wurde.

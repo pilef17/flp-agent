@@ -72,39 +72,63 @@ const suite = () =>
     const thisMonth = parentA.getByTestId(`month-${months[0]}`);
     const nextMonth = parentA.getByTestId(`month-${months[1]}`);
     check(await seen(thisMonth.getByText("Offen")), "Monatsplanung: Status zuerst offen");
-    // Diesen Monat: Pause mit Grund
+    await thisMonth.getByRole("button", { name: /Aktiv$/ }).click();
+    await thisMonth.getByText("Aktiv", { exact: true }).last().waitFor();
     const tPause = Date.now();
-    await thisMonth.getByRole("button", { name: /pausiert/ }).click();
-    await thisMonth.getByText("Verletzung").click();
-    await thisMonth.getByLabel("Bemerkung (optional)").fill("Knie, 2 Wochen");
-    await thisMonth.getByRole("button", { name: "Pause melden" }).click();
-    await thisMonth.getByText("Pausiert · Verletzung").waitFor();
+    await nextMonth.getByRole("button", { name: /pausiert/ }).click();
+    await nextMonth.getByText("Verletzung").click();
+    await nextMonth.getByLabel("Bemerkung (optional)").fill("Knie, 2 Wochen");
+    await nextMonth.getByRole("button", { name: "Pause melden" }).click();
+    await nextMonth.getByText("Pausiert · Verletzung").waitFor();
+    check(
+      sql(`select string_agg(active::text || ':' || reason, ',' order by month) from public.player_month_status where player_id='${playerId}'`) === "true:,false:verletzung",
+      "Monatsplanung: aktiv und pausiert (mit Grund) gespeichert",
+    );
     const monthMail = await mailText("trainer@flp.test", tPause);
     check(monthMail.includes("Verletzung") && monthMail.includes("Bemerkung: Knie, 2 Wochen"), "Monatsplanung: Trainer erhält E-Mail zur Pause");
-    // Nächsten Monat: aktiv, dann Wunschtermine am 10. und 17.
-    await nextMonth.getByRole("button", { name: /Aktiv$/ }).click();
-    await nextMonth.getByText("Wunschtermine: noch keine gewählt").waitFor();
-    await nextMonth.getByRole("button", { name: "📅 Termine wählen" }).click();
-    await nextMonth.getByRole("button", { name: /^\S+ 10\.$/ }).click();
-    await nextMonth.getByRole("button", { name: /^\S+ 17\.$/ }).click();
-    check(await seen(nextMonth.getByText(/^Gewählt: .*10\..*17\./)), "Monatsplanung: gewählte Tage werden angezeigt");
-    await nextMonth.getByRole("button", { name: "Termine speichern" }).click();
-    await nextMonth.getByText(/^Wunschtermine: .*10\..*17\./).waitFor();
-    check(
-      sql(`select string_agg(active::text || ':' || reason || ':' || array_to_string(dates, ';'), ',' order by month) from public.player_month_status where player_id='${playerId}'`) ===
-        `false:verletzung:,true::${months[1]}-10;${months[1]}-17`,
-      "Monatsplanung: Pause (mit Grund) und Wunschtermine gespeichert",
-    );
-    // «Aktiv» erneut drücken behält die Termine
-    await nextMonth.getByRole("button", { name: /Aktiv$/ }).click();
-    await parentA.waitForLoadState("networkidle");
-    check(sql(`select cardinality(dates) from public.player_month_status where player_id='${playerId}' and month='${months[1]}-01'`) === "2", "Monatsplanung: Termine bleiben beim erneuten «Aktiv»");
     sql(`insert into public.coach_player_links (coach_id, player_id) select id, '${playerId}' from auth.users where email='admin@flp.test' on conflict do nothing`);
-    await admin.goto(`${BASE}/admin/monat?m=${months[0]}`);
-    check(await seen(admin.getByText("Pausiert · Verletzung")) && await seen(admin.getByText("«Knie, 2 Wochen»")), "Monatsplanung: Trainer sieht Pause mit Grund");
     await admin.goto(`${BASE}/admin/monat?m=${months[1]}`);
-    const wish = admin.getByTestId("wunschtermine");
-    check((await wish.locator("li").count()) === 2 && await seen(wish.getByText(/1 · Lio/).first()), "Monatsplanung: Trainer sieht Wunschtermine nach Tag");
+    check(await seen(admin.getByText("Pausiert · Verletzung")) && await seen(admin.getByText("«Knie, 2 Wochen»")), "Monatsplanung: Trainer sieht Pause mit Grund");
+    await admin.goto(`${BASE}/admin/monat?m=${months[0]}`);
+    check(await seen(admin.locator("li", { hasText: "Aktiv" }).first()), "Monatsplanung: Trainer sieht aktiven Monat");
+
+    // F3: Trainingstermine – Eltern schlagen Wunschzeit vor, Trainer bestätigt
+    const [day1, day2] = sql(`select to_char((now() at time zone 'Europe/Zurich')::date + 9, 'YYYY-MM-DD') || ',' || to_char((now() at time zone 'Europe/Zurich')::date + 10, 'YYYY-MM-DD')`).split(",");
+    await parentA.goto(`${BASE}/elternbereich`);
+    const tReq = Date.now();
+    await parentA.getByLabel(/^Tag für /).fill(day1);
+    await parentA.getByLabel("Wunschzeit").fill("9:00 / 9:30");
+    await parentA.getByLabel("Ort").selectOption("Hardhof");
+    await parentA.getByRole("button", { name: "Termin anfragen" }).click();
+    await parentA.getByText("Danke! Die Anfrage ist bei Felipe.").waitFor();
+    check(await seen(parentA.getByTestId("requests").getByText("🕓 Angefragt")), "Termine: Anfrage erscheint als «Angefragt»");
+    const reqMail = await mailText("trainer@flp.test", tReq);
+    check(reqMail.includes("Wunschzeit: 9:00 / 9:30") && reqMail.includes("Ort: Hardhof"), "Termine: Trainer erhält E-Mail mit Wunschzeit");
+    await parentA.getByLabel(/^Tag für /).fill(day1);
+    await parentA.getByLabel("Wunschzeit").fill("10:00");
+    await parentA.getByRole("button", { name: "Termin anfragen" }).click();
+    check(await seen(parentA.getByText("Für diesen Tag gibt es schon eine Anfrage.")), "Termine: pro Tag nur eine Anfrage");
+    await parentA.getByLabel(/^Tag für /).fill(day2);
+    await parentA.getByLabel("Wunschzeit").fill("17:00");
+    await parentA.getByRole("button", { name: "Termin anfragen" }).click();
+    await parentA.getByText("Danke! Die Anfrage ist bei Felipe.").waitFor();
+    await parentA.getByTestId("requests").locator("li", { hasText: "17:00" }).getByRole("button", { name: "Zurückziehen" }).click();
+    await parentA.waitForLoadState("networkidle");
+    check(sql(`select count(*) from public.training_requests where player_id='${playerId}'`) === "1", "Termine: offene Anfrage zurückgezogen");
+
+    await admin.goto(`${BASE}/admin/agenda?w=${day1}`);
+    const agendaDay = admin.getByTestId(`agenda-${day1}`);
+    check(await seen(agendaDay.getByText(/Lio Beispiel – 9:00 \/ 9:30 – Hardhof/)), "Agenda: Anfrage wie in der Notizen-Liste");
+    const tDecide = Date.now();
+    await agendaDay.getByLabel(/^Definitive Zeit/).fill("9:30");
+    await agendaDay.getByLabel(/^Nachricht an die Eltern/).fill("Bitte 5 Minuten früher da sein");
+    await agendaDay.getByRole("button", { name: /bestätigen$/ }).click();
+    await agendaDay.getByText(/Lio Beispiel – 9:30 – Hardhof/).waitFor();
+    const famMail = await mailText("eltern-a@flp.test", tDecide);
+    check(famMail.includes("Zeit: 9:30") && famMail.includes("Bitte 5 Minuten fr"), "Agenda: Eltern erhalten Bestätigung per E-Mail");
+    await parentA.goto(`${BASE}/elternbereich`);
+    check(await seen(parentA.getByTestId("requests").getByText("✅ Bestätigt")) && await seen(parentA.getByText(/9:30 · Hardhof/)), "Termine: Eltern sehen die Bestätigung mit Zeit");
+    check(await parentA.getByTestId("requests").getByRole("button", { name: "Zurückziehen" }).count() === 0, "Termine: bestätigte Termine nicht zurückziehbar");
 
     // G: Echte Testdaten via SQL (Beurteilungs-UI folgt in Phase 3) → Anzeige prüfen
     const adminId = sql(`select id from auth.users where email='admin@flp.test'`);
