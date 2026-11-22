@@ -14,6 +14,21 @@ function decodeQuotedPrintable(s) {
   return s.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
 }
 
+/** Text (Header + Inhalt) der neuesten E-Mail an `to`, die nach `after` (ms) eingegangen ist. */
+export async function mailText(to, after) {
+  const dir = process.env.E2E_MAILDIR;
+  for (let i = 0; i < 60; i++) {
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).map((f) => `${dir}/${f}`) : [];
+    const hits = files
+      .filter((f) => fs.statSync(f).mtimeMs > after)
+      .map((f) => decodeQuotedPrintable(fs.readFileSync(f, "utf8")))
+      .filter((m) => m.includes(to));
+    if (hits.length) return hits.at(-1);
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(`Keine E-Mail an ${to}`);
+}
+
 /** Link aus der neuesten E-Mail an `to`, die nach `after` (ms) eingegangen ist. */
 export async function mailLink(to, after) {
   const dir = process.env.E2E_MAILDIR;
@@ -76,7 +91,7 @@ export async function runSuite(name, body) {
 
   console.log(`\n=== ${name}`);
   try {
-    await body({ BASE, PW, OUT: outDir, ctx, register, login, check, seen, sql, mailLink, browser });
+    await body({ BASE, PW, OUT: outDir, ctx, register, login, check, seen, sql, mailLink, mailText, browser });
   } catch (e) {
     failures++;
     console.log(`FAIL Abbruch: ${e instanceof Error ? e.message.split("\n")[0] : e}`);

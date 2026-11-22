@@ -1,8 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { evaluate, isCompleteAnswers } from "@/lib/check";
+import { evaluate, isCompleteAnswers, leadNotification } from "@/lib/check";
+import { notifyCoach } from "@/lib/mail";
+import { publicEnv } from "@/lib/env";
 
 export type LeadState = {
   ok?: boolean;
@@ -65,5 +68,8 @@ export async function submitLead(_: LeadState, formData: FormData): Promise<Lead
     consent_at: new Date().toISOString(),
   });
   if (error) return { message: "Das hat leider nicht geklappt. Bitte versuchen Sie es später erneut.", values };
+  // E-Mail an den Trainer erst nach der Antwort senden – die Familie wartet nicht auf den Mailserver
+  const mail = leadNotification(parsed.data, r, publicEnv.siteUrl());
+  after(() => notifyCoach({ ...mail, replyTo: parsed.data.email }));
   return { ok: true };
 }

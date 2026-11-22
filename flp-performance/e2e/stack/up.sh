@@ -110,6 +110,11 @@ WOCHENFRAGE_WHATSAPP=+41790000000
 STRIPE_SECRET_KEY=sk_test_e2e
 STRIPE_WEBHOOK_SECRET=whsec_e2e_local_secret
 STRIPE_API_BASE=http://localhost:12111
+# Benachrichtigung an den Trainer über den lokalen SMTP-Sink
+SMTP_HOST=127.0.0.1
+SMTP_PORT=2525
+SMTP_FROM=noreply@flp.test
+LEAD_NOTIFY_TO=trainer@flp.test
 E2E_BASE_URL=$APP_URL
 E2E_DB_URL=$DB_URL
 E2E_MAILDIR=$RUN/mail/new

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { QUESTIONS, checkMessage, evaluate, isCompleteAnswers, levelFor, programSlug } from "./check";
+import { QUESTIONS, checkMessage, evaluate, isCompleteAnswers, leadNotification, levelFor, programSlug } from "./check";
 
 const all = (v: number) => QUESTIONS.map(() => v);
 
@@ -44,5 +44,24 @@ describe("Spieler-Check", () => {
     const msg = checkMessage(evaluate(all(0)));
     expect(msg).toContain("Einsteiger (0/24");
     expect(msg).toContain("Probetraining");
+  });
+});
+
+describe("Benachrichtigung an den Trainer", () => {
+  it("enthält Kontakt, Niveau und Trainingsfelder", () => {
+    const r = evaluate([...QUESTIONS.slice(0, 6).map(() => 2), ...QUESTIONS.slice(6).map(() => 0)]);
+    const m = leadNotification({ parentName: "Anna Muster", email: "anna@example.ch", childAge: 11, position: "Flügel" }, r, "https://flp.example");
+    expect(m.subject).toBe("Neue Anfrage Spieler-Check: Anna Muster – Mittel");
+    expect(m.text).toContain("E-Mail: anna@example.ch");
+    expect(m.text).toContain("Kind: 11 Jahre, Flügel");
+    expect(m.text).toContain("Mittel (12/24");
+    expect(m.text).toContain("Schulterblick");
+    expect(m.text).toContain("https://flp.example/admin/check");
+  });
+  it("kommt ohne Alter und Position aus und lässt keine Zeilenumbrüche in den Betreff", () => {
+    const m = leadNotification({ parentName: "A\nB", email: "a@b.ch", childAge: null, position: "" }, evaluate(QUESTIONS.map(() => 2)), "x");
+    expect(m.subject).not.toMatch(/\n/);
+    expect(m.text).toContain("Kind: keine Angabe");
+    expect(m.text).toContain("überall volle Punktzahl");
   });
 });

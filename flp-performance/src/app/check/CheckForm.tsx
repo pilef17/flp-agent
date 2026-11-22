@@ -19,6 +19,8 @@ type Props = {
 };
 
 const AREA_LABEL = { technik: "Technik", taktik: "Taktik" } as const;
+/** Ergebnis kurz halten, damit das Angebot schnell sichtbar ist */
+const MAX_STRENGTHS = 4;
 
 export function CheckForm({ offers, coachPhone }: Props) {
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null));
@@ -146,9 +148,12 @@ function Result({
           <h3 className="eyebrow mb-2">Stärken</h3>
           {result.strengths.length ? (
             <ul className="list-disc space-y-1 pl-5 text-sm">
-              {result.strengths.map((s) => (
+              {result.strengths.slice(0, MAX_STRENGTHS).map((s) => (
                 <li key={s}>{s}</li>
               ))}
+              {result.strengths.length > MAX_STRENGTHS && (
+                <li className="list-none text-mute">+ {result.strengths.length - MAX_STRENGTHS} weitere</li>
+              )}
             </ul>
           ) : (
             <p className="text-sm text-mute">Noch keine Bereiche mit voller Punktzahl – genau hier hilft gezieltes Training.</p>
