@@ -42,8 +42,8 @@ export default function PrivacyPolicyPage() {
             <strong>Daten des Kindes:</strong> Vor- und Nachname, Geburtsjahr, optional Position, starker Fuss und Verein.
           </li>
           <li>
-            <strong>Training:</strong> Trainingspläne, erledigte Einheiten, Beurteilungen, Feedback des Trainers und – nur mit
-            Einwilligung – Trainingsvideos.
+            <strong>Training:</strong> Trainingspläne, erledigte Einheiten, Beurteilungen, Feedback des Trainers, der monatliche
+            Trainingsstatus (aktiv oder pausiert, mit Grund) und – nur mit Einwilligung – Trainingsvideos.
           </li>
           <li>
             <strong>Einwilligungen:</strong> welche Einwilligung wann erteilt oder widerrufen wurde.

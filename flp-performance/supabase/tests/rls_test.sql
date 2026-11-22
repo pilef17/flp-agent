@@ -341,6 +341,38 @@ select tests.eq((select count(*) from storage.objects where bucket_id = 'player-
   'Fremde Eltern sehen Spielervideos nicht');
 select tests.logout();
 
+-- Monatsplanung: Eltern melden aktiv/pausiert pro Monat
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.allowed($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-01', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Eltern melden Monatsstatus für das eigene Kind');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-01-01', true, '00000000-0000-0000-0000-00000000000c')$$,
+  'Monatsstatus nur im eigenen Namen');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-02-01', false, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Pause ohne Grund abgelehnt');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-03-15', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Monat muss am 1. beginnen');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000002', '2026-12-01', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Kein Monatsstatus für fremde Kinder');
+update public.player_month_status set active = false, reason = 'verletzung', set_by = '00000000-0000-0000-0000-0000000000a1'
+  where player_id = '10000000-0000-0000-0000-000000000001' and month = '2026-12-01';
+select tests.ok((select not active and reason = 'verletzung' from public.player_month_status
+  where player_id = '10000000-0000-0000-0000-000000000001' and month = '2026-12-01'), 'Eltern ändern auf pausiert mit Grund');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.eq((select count(*) from public.player_month_status), 0, 'Fremde Eltern sehen den Monatsstatus nicht');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.player_month_status), 1, 'Coach sieht den Monatsstatus seines Spielers');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select 1 from public.player_month_status$$, 'Anonym: kein Monatsstatus');
+select tests.logout();
+
 -- Wochenvorlagen
 select tests.login('00000000-0000-0000-0000-00000000000c');
 select tests.eq((select count(*) from public.week_templates), 2, 'Coach sieht die Startvorlagen');

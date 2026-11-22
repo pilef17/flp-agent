@@ -1,7 +1,7 @@
 import { runSuite } from "../lib.mjs";
 
 const suite = () =>
-  runSuite("Phase 1 · Auth, Eltern, Admin, Datenschutz", async ({ BASE, PW, OUT, ctx, register, login, check, seen, sql, mailLink }) => {
+  runSuite("Phase 1 · Auth, Eltern, Admin, Datenschutz", async ({ BASE, PW, OUT, ctx, register, login, check, seen, sql, mailLink, mailText }) => {
     // A: Admin registrieren + Rolle per SQL vergeben (Bootstrap wie in der Doku)
     const admin = await ctx();
     await register(admin, "Felipe Admin", "admin@flp.test");
@@ -66,6 +66,31 @@ const suite = () =>
     await parentA.locator("li", { hasText: "Bearbeitung der Trainingsdaten" }).getByText("Erteilt").waitFor();
     check(await parentA.getByText("Bitte bestätige unten die Einwilligung").count() === 0, "Einwilligung erteilt, Hinweis verschwindet");
     check(sql(`select count(*) from public.guardian_consents where player_id='${playerId}'`) === "1", "Einwilligung in DB protokolliert");
+
+    // F2: Monatsplanung – Eltern melden aktiv / pausiert, Trainer erhält E-Mail und sieht die Übersicht
+    const months = sql(`select to_char(date_trunc('month', now() at time zone 'Europe/Zurich'), 'YYYY-MM') || ',' || to_char(date_trunc('month', now() at time zone 'Europe/Zurich') + interval '1 month', 'YYYY-MM')`).split(",");
+    const thisMonth = parentA.getByTestId(`month-${months[0]}`);
+    const nextMonth = parentA.getByTestId(`month-${months[1]}`);
+    check(await seen(thisMonth.getByText("Offen")), "Monatsplanung: Status zuerst offen");
+    await thisMonth.getByRole("button", { name: /Aktiv$/ }).click();
+    await thisMonth.getByText("Aktiv", { exact: true }).last().waitFor();
+    const tPause = Date.now();
+    await nextMonth.getByRole("button", { name: /pausiert/ }).click();
+    await nextMonth.getByText("Verletzung").click();
+    await nextMonth.getByLabel("Bemerkung (optional)").fill("Knie, 2 Wochen");
+    await nextMonth.getByRole("button", { name: "Pause melden" }).click();
+    await nextMonth.getByText("Pausiert · Verletzung").waitFor();
+    check(
+      sql(`select string_agg(active::text || ':' || reason, ',' order by month) from public.player_month_status where player_id='${playerId}'`) === "true:,false:verletzung",
+      "Monatsplanung: aktiv und pausiert (mit Grund) gespeichert",
+    );
+    const monthMail = await mailText("trainer@flp.test", tPause);
+    check(monthMail.includes("Verletzung") && monthMail.includes("Bemerkung: Knie, 2 Wochen"), "Monatsplanung: Trainer erhält E-Mail zur Pause");
+    sql(`insert into public.coach_player_links (coach_id, player_id) select id, '${playerId}' from auth.users where email='admin@flp.test' on conflict do nothing`);
+    await admin.goto(`${BASE}/admin/monat?m=${months[1]}`);
+    check(await seen(admin.getByText("Pausiert · Verletzung")) && await seen(admin.getByText("«Knie, 2 Wochen»")), "Monatsplanung: Trainer sieht Pause mit Grund");
+    await admin.goto(`${BASE}/admin/monat?m=${months[0]}`);
+    check(await seen(admin.locator("li", { hasText: "Aktiv" }).first()), "Monatsplanung: Trainer sieht aktiven Monat");
 
     // G: Echte Testdaten via SQL (Beurteilungs-UI folgt in Phase 3) → Anzeige prüfen
     const adminId = sql(`select id from auth.users where email='admin@flp.test'`);
