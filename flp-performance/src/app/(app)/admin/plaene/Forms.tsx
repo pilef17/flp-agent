@@ -5,14 +5,33 @@ import { Field, SelectField, TextArea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/ui/Feedback";
 import { CATEGORIES, type Category } from "@/lib/exercises";
-import { addSession, addSessionExercise, createPlan } from "./actions";
+import { FOCUS, FOCUS_KEYS } from "@/lib/focus";
+import { addSession, addSessionExercise, createPlan, updateSession } from "./actions";
 
-export function CreatePlanForm({ playerId, defaultDate }: { playerId: string; defaultDate: string }) {
+export type TemplateOption = { id: string; title: string; audience: string };
+
+const FOCUS_OPTIONS = [{ value: "", label: "Kein Fokus" }, ...FOCUS_KEYS.map((k) => ({ value: k, label: FOCUS[k].label }))];
+
+export function CreatePlanForm({ playerId, defaultDate, templates }: { playerId: string; defaultDate: string; templates: TemplateOption[] }) {
   const [state, action] = useActionState(createPlan, {});
+  const [templateId, setTemplateId] = useState(state.values?.templateId ?? "");
   return (
     <form key={state.values?._n} action={action} className="space-y-5" noValidate>
       <FormMessage state={state} />
       <input type="hidden" name="playerId" value={playerId} />
+      {templates.length > 0 && (
+        <SelectField
+          label="Vorlage"
+          name="templateId"
+          value={templateId}
+          onChange={(e) => setTemplateId(e.target.value)}
+          options={[
+            { value: "", label: "Leerer Plan" },
+            ...templates.map((t) => ({ value: t.id, label: t.audience ? `${t.title} (${t.audience})` : t.title })),
+          ]}
+          error={state.errors?.templateId}
+        />
+      )}
       <Field label="Titel" name="title" placeholder="z.B. Woche Ballkontrolle" defaultValue={state.values?.title} error={state.errors?.title} />
       <Field
         label="Woche (beliebiger Tag)"
@@ -22,14 +41,28 @@ export function CreatePlanForm({ playerId, defaultDate }: { playerId: string; de
         hint="Der Plan beginnt am Montag dieser Woche."
         error={state.errors?.weekDate}
       />
-      <TextArea label="Notizen für Eltern/Spieler (optional)" name="notes" rows={2} defaultValue={state.values?.notes} error={state.errors?.notes} />
+      {templateId ? (
+        <p className="text-sm text-mute">Die Trainingstage, Uhrzeiten und Notizen kommen aus der Vorlage. Danach fügst du die Übungen hinzu.</p>
+      ) : (
+        <TextArea label="Notizen für Eltern/Spieler (optional)" name="notes" rows={2} defaultValue={state.values?.notes} error={state.errors?.notes} />
+      )}
       <SubmitButton pendingLabel="Wird erstellt …">Plan erstellen</SubmitButton>
     </form>
   );
 }
 
 /** Aufklappbarer Bereich, der nach Fehlern offen bleibt (Status lebt im Client). */
-export function NewPlanSection({ playerId, defaultDate, startOpen }: { playerId: string; defaultDate: string; startOpen: boolean }) {
+export function NewPlanSection({
+  playerId,
+  defaultDate,
+  startOpen,
+  templates,
+}: {
+  playerId: string;
+  defaultDate: string;
+  startOpen: boolean;
+  templates: TemplateOption[];
+}) {
   const [open, setOpen] = useState(startOpen);
   if (!open) {
     return (
@@ -38,19 +71,63 @@ export function NewPlanSection({ playerId, defaultDate, startOpen }: { playerId:
       </button>
     );
   }
-  return <CreatePlanForm playerId={playerId} defaultDate={defaultDate} />;
+  return <CreatePlanForm playerId={playerId} defaultDate={defaultDate} templates={templates} />;
 }
 
 export function AddSessionForm({ planId, days }: { planId: string; days: { value: string; label: string }[] }) {
   const [state, action] = useActionState(addSession, {});
+  const e = state.errors ?? {};
   return (
-    <form key={state.values?._n} action={action} className="grid gap-4 sm:grid-cols-[12rem_1fr_auto] sm:items-end" noValidate>
+    <form key={state.values?._n} action={action} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[12rem_1fr_14rem]" noValidate>
       <input type="hidden" name="planId" value={planId} />
-      <SelectField label="Tag" name="scheduledOn" options={days} defaultValue={state.values?.scheduledOn} error={state.errors?.scheduledOn} />
-      <Field label="Titel der Einheit" name="title" placeholder="z.B. Technik & Koordination" defaultValue={state.values?.title} error={state.errors?.title} />
-      <SubmitButton pendingLabel="…">Einheit hinzufügen</SubmitButton>
-      <div className="sm:col-span-3">
+      <SelectField label="Tag" name="scheduledOn" options={days} defaultValue={state.values?.scheduledOn} error={e.scheduledOn} />
+      <Field label="Titel der Einheit" name="title" placeholder="z.B. Athletik & Sprungkraft" defaultValue={state.values?.title} error={e.title} />
+      <SelectField label="Fokus" name="focus" options={FOCUS_OPTIONS} defaultValue={state.values?.focus ?? ""} error={e.focus} />
+      <div className="grid grid-cols-2 gap-3 sm:col-span-2 lg:col-span-1">
+        <Field label="Beginn" name="startsAt" type="time" defaultValue={state.values?.startsAt} error={e.startsAt} />
+        <Field label="Ende" name="endsAt" type="time" defaultValue={state.values?.endsAt} error={e.endsAt} />
+      </div>
+      <div className="flex items-end sm:col-span-2 lg:col-span-2">
+        <SubmitButton pendingLabel="…">Einheit hinzufügen</SubmitButton>
+      </div>
+      <div className="sm:col-span-2 lg:col-span-3">
         <FormMessage state={state.ok ? {} : state} />
+      </div>
+    </form>
+  );
+}
+
+export type SessionEditValues = {
+  id: string;
+  title: string;
+  notes: string;
+  focus: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+/** Titel, Fokus, Uhrzeit und Hinweis einer bestehenden Einheit ändern. */
+export function EditSessionForm({ planId, session }: { planId: string; session: SessionEditValues }) {
+  const [state, action] = useActionState(updateSession, {});
+  const e = state.errors ?? {};
+  const v = (k: keyof SessionEditValues & string, fallback: string) => state.values?.[k] ?? fallback;
+  const id = (name: string) => `${name}-${session.id}`;
+  return (
+    <form action={action} className="mt-3 grid gap-4 sm:grid-cols-2" noValidate>
+      <input type="hidden" name="planId" value={planId} />
+      <input type="hidden" name="sessionId" value={session.id} />
+      <Field label="Titel" id={id("title")} name="title" defaultValue={v("title", session.title)} error={e.title} />
+      <SelectField label="Fokus" id={id("focus")} name="focus" options={FOCUS_OPTIONS} defaultValue={v("focus", session.focus ?? "")} error={e.focus} />
+      <Field label="Beginn" id={id("startsAt")} name="startsAt" type="time" defaultValue={v("startsAt", session.startsAt ?? "")} error={e.startsAt} />
+      <Field label="Ende" id={id("endsAt")} name="endsAt" type="time" defaultValue={v("endsAt", session.endsAt ?? "")} error={e.endsAt} />
+      <div className="sm:col-span-2">
+        <TextArea label="Hinweis für Familie (optional)" id={id("notes")} name="notes" rows={2} defaultValue={v("notes", session.notes)} error={e.notes} />
+      </div>
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
+        <SubmitButton variant="secondary" pendingLabel="Wird gespeichert …">
+          Einheit speichern
+        </SubmitButton>
+        <FormMessage state={state} />
       </div>
     </form>
   );

@@ -71,6 +71,7 @@ export function navFor(roles: readonly Role[]): NavItem[] {
     const items: NavItem[] = [
       { href: "/admin", label: "Übersicht", short: "Start" },
       { href: "/admin/spieler", label: "Spieler" },
+      { href: "/admin/vorlagen", label: "Vorlagen", desktopOnly: true },
       // Admin: auf dem Handy über die Übersicht erreichbar (max. 5 Einträge in der Leiste)
       { href: "/admin/uebungen", label: "Übungen", desktopOnly: isAdmin },
       { href: "/admin/beurteilungen", label: "Beurteilungen", short: "Bewertung" },

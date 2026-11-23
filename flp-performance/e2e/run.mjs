@@ -5,7 +5,7 @@ import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const here = new URL(".", import.meta.url).pathname;
-const all = ["phase1-auth-eltern", "phase2-coaching", "phase3-entwicklung", "phase4-shop", "wochenfrage", "a11y-mobile"];
+const all = ["phase1-auth-eltern", "phase2-coaching", "phase3-entwicklung", "phase4-shop", "wochenfrage", "spieler-check", "a11y-mobile"];
 const selected = process.argv.slice(2).length ? process.argv.slice(2) : all;
 
 function loadEnv() {

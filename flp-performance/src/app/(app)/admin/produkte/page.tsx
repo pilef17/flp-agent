@@ -7,7 +7,7 @@ import { accessLabel } from "@/lib/commerce";
 import { PageHeader, Badge } from "@/components/ui/Feedback";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ShopTabs } from "./ShopTabs";
-import { ProductForm } from "./Forms";
+import { ImportProgramsForm, ProductForm } from "./Forms";
 import { createProduct } from "./actions";
 
 export const metadata: Metadata = { title: "Produkte" };
@@ -44,10 +44,16 @@ export default async function AdminProductsPage() {
             ))}
           </ul>
         </Card>
-        <Card className="h-fit lg:col-span-2">
-          <CardTitle eyebrow="Neu" title="Programm erstellen" />
-          <ProductForm action={createProduct} submitLabel="Programm erstellen" />
-        </Card>
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="h-fit">
+            <CardTitle eyebrow="Neu" title="Programm erstellen" />
+            <ProductForm action={createProduct} submitLabel="Programm erstellen" />
+          </Card>
+          <Card className="h-fit">
+            <CardTitle eyebrow="Import" title="Positionsprogramme importieren" />
+            <ImportProgramsForm />
+          </Card>
+        </div>
       </div>
     </>
   );

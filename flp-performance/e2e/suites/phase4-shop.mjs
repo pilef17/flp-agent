@@ -1,5 +1,8 @@
 import { runSuite } from "../lib.mjs";
 import Stripe from "stripe";
+import { AxeBuilder } from "@axe-core/playwright";
+import fs from "node:fs";
+import { exportPrograms } from "../../scripts/flp-app-export.mjs";
 
 const suite = () =>
   runSuite("Phase 4 · Shop, Stripe, Zugänge", async ({ BASE, PW, OUT, ctx, register, login, check, seen, sql, mailLink }) => {
@@ -67,7 +70,27 @@ const suite = () =>
     await anon.waitForURL("**/programme/flp-training");
     check(await seen(anon.getByText("Lektion 1: Ballgefühl")), "Inhaltsübersicht (nur Titel) öffentlich");
     check((await anon.getByText("Jeden Tag 10 Minuten").count()) === 0, "Inhalt selbst nicht öffentlich");
-    check(await seen(anon.getByRole("link", { name: "Anmelden und kaufen" })), "Kauf erfordert Login");
+    check(await seen(anon.getByRole("link", { name: "Konto erstellen und kaufen" })), "Kauf erfordert Konto");
+    check(await seen(anon.getByRole("link", { name: "Ich habe ein Konto" })), "Kauf: Anmelden für bestehende Konten");
+
+    // Neue Familie: Registrierung aus dem Programm führt nach der E-Mail-Bestätigung zurück zum Kauf
+    const buyer = await ctx(true);
+    await buyer.goto(`${BASE}/programme/flp-training`);
+    await buyer.getByRole("link", { name: "Konto erstellen und kaufen" }).click();
+    await buyer.waitForURL("**/registrieren?next=*");
+    check(await seen(buyer.getByText("direkt zurück zum Programm")), "Registrierung erklärt den Rückweg zum Kauf");
+    const tBuyer = Date.now();
+    await buyer.fill("#f-fullName", "Neue Familie");
+    await buyer.fill("#f-email", "neu-kauf@flp.test");
+    await buyer.fill("#f-password", PW);
+    await buyer.fill("#f-passwordConfirm", PW);
+    await buyer.check("input[name=privacy]");
+    await buyer.click("button[type=submit]");
+    await buyer.getByText("Fast geschafft").waitFor();
+    await buyer.goto(await mailLink("neu-kauf@flp.test", tBuyer));
+    await buyer.waitForURL("**/programme/flp-training");
+    check(await seen(buyer.getByRole("button", { name: /Jetzt kaufen – CHF 42.50/ })), "Nach Bestätigung direkt zurück beim Programm mit Kaufknopf");
+    await buyer.context().close();
     await anon.goto(`${BASE}/programme/flp-training/inhalt`);
     check(anon.url().includes("/login"), "Programminhalt ohne Login gesperrt");
 
@@ -141,6 +164,64 @@ const suite = () =>
     check(await parent.waitForURL("**/programme/flp-training", { timeout: 10000 }).then(() => true).catch(() => false), "Nach Rückerstattung kein Zugang");
     await parent.goto(`${BASE}/meine-kaeufe`);
     check(await seen(parent.getByText("Rückerstattet", { exact: true })), "Bestellung als rückerstattet angezeigt");
+
+    // 8. Positionsprogramme aus der Netlify-App importieren
+    const appHtml = new URL("../../../flp-app/index.html", import.meta.url);
+    const jugend = JSON.stringify(exportPrograms(fs.readFileSync(appHtml, "utf8"), "jugend"));
+    const upload = async (name, body) => {
+      await admin.goto(`${BASE}/admin/produkte`);
+      await admin.setInputFiles("#import-file", { name, mimeType: "application/json", buffer: Buffer.from(body) });
+      await admin.getByRole("button", { name: "Programme importieren" }).click();
+    };
+    await upload("kaputt.json", "{nicht json");
+    check(await seen(admin.getByText("Die Datei ist kein gültiges JSON.")), "Import: ungültiges JSON abgelehnt");
+    await upload("falsch.json", JSON.stringify({ version: 1, products: [] }));
+    check(await seen(admin.getByText(/Ungültiges Format/)), "Import: falsches Format abgelehnt");
+    await upload("programme-jugend.json", jugend);
+    check(await admin.getByText("7 Programme importiert.", { exact: false }).waitFor({ timeout: 30000 }).then(() => true).catch(() => false), `Import: 7 Jugend-Programme (${Math.round(jugend.length / 1024)} KB)`);
+    check(sql(`select count(*) from public.products where slug like 'jugend-%' and not is_active`) === "7", "Importierte Programme sind inaktiv");
+    check(sql(`select count(*) from public.product_content pc join public.products p on p.id = pc.product_id where p.slug = 'jugend-fluegelspieler' and pc.kind = 'session'`) === "12", "12 Einheiten pro Jugend-Programm");
+    await upload("programme-jugend.json", jugend);
+    await admin.getByText("7 Programme importiert.", { exact: false }).waitFor({ timeout: 30000 });
+    check(sql(`select count(*) from public.products where slug like 'jugend-%'`) === "7" && sql(`select count(*) from public.product_content pc join public.products p on p.id = pc.product_id where p.slug = 'jugend-fluegelspieler'`) === "12", "Erneuter Import ohne Duplikate");
+    const pro = JSON.stringify(exportPrograms(fs.readFileSync(appHtml, "utf8"), "pro"));
+    await upload("programme-pro.json", pro);
+    check(await admin.getByText("7 Programme importiert.", { exact: false }).waitFor({ timeout: 30000 }).then(() => true).catch(() => false), `Import: 7 Pro-Programme (${Math.round(pro.length / 1024)} KB)`);
+    check(sql(`select count(*) from public.product_content pc join public.products p on p.id = pc.product_id where p.slug = 'pro-stuermer' and pc.kind = 'session'`) === "22", "Pro-Programm: 10 Pro-Einheiten + 12 Jugend-Einheiten");
+    const flId = sql(`select id from public.products where slug = 'jugend-fluegelspieler'`);
+    await admin.goto(`${BASE}/admin/produkte/${flId}`);
+    check(await seen(admin.getByText("Einheit", { exact: true }).first()), "Admin: Einheiten im Programm aufgelistet");
+    await admin.getByRole("button", { name: "Im Shop aktivieren" }).click();
+    await admin.getByText("Im Shop sichtbar").waitFor();
+    await anon.goto(`${BASE}/programme/jugend-fluegelspieler`);
+    check(await seen(anon.getByRole("heading", { name: "Jugend-Programm · Flügelspieler" })) && await seen(anon.getByText("CHF 49.00")), "Shop: Jugend-Programm mit Preis");
+    check(await seen(anon.getByText(/Woche 1 · A:/)) && (await anon.getByText("Jonglieren").count()) === 0, "Shop: Einheiten nur als Titel, Inhalt geschützt");
+    check(await seen(anon.getByText("12 Einheiten", { exact: true })) && await seen(anon.getByText("+ 9 weitere – nach dem Kauf freigeschaltet")), "Shop: nur Anzahl und Vorschau der ersten 3 Einheiten");
+    check((await anon.getByText(/Woche 2 · B:/).count()) === 0, "Shop: weitere Einheiten nicht ablesbar");
+    await anon.goto(`${BASE}/programme`);
+    check(await seen(anon.getByRole("heading", { name: "Was ist deine Position?" })), "Shop: Positionswahl mit Spielfeld");
+    check(await anon.getByRole("button", { name: "Pro · 17+" }).isDisabled(), "Shop: Stufe ohne aktive Programme gesperrt");
+    check(await seen(anon.getByText("Bald verfügbar")), "Shop: inaktive Positionen als «Bald verfügbar»");
+    check(await seen(anon.getByRole("heading", { name: "Weitere Programme" })), "Shop: übrige Programme unter «Weitere Programme»");
+    const posAxe = await new AxeBuilder({ page: anon }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const posSerious = posAxe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    check(posSerious.length === 0, `Positionswahl barrierefrei (${posSerious.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`).join(", ") || "keine Verstösse"})`);
+    await anon.screenshot({ path: `${OUT}/p4_positionen_mobile.png`, fullPage: true });
+    await anon.getByRole("link", { name: /7 · Jugend: Flügelspieler/ }).click();
+    check(await anon.waitForURL("**/programme/jugend-fluegelspieler").then(() => true).catch(() => false), "Shop: Position führt zum Programm");
+    await admin.goto(`${BASE}/admin/bestellungen`);
+    await admin.fill("#grant-email", "zweit@flp.test");
+    await admin.selectOption("#grant-product", { label: "Jugend-Programm · Flügelspieler" });
+    await admin.getByRole("button", { name: "Zugang vergeben" }).click();
+    await admin.getByText("Zugang für zweit@flp.test vergeben.").waitFor();
+    await other.goto(`${BASE}/programme/jugend-fluegelspieler/inhalt`);
+    check(await seen(other.getByRole("heading", { name: /Woche 1 · A:/ })), "Käufer sieht die Einheiten");
+    await other.getByText("Ablauf anzeigen").first().click();
+    check(await seen(other.getByText("Jonglieren").first()) && await seen(other.getByText(/Coaching: «/).first()), "Einheit zeigt Übungen mit Coaching-Hinweisen");
+    await other.screenshot({ path: `${OUT}/p4_session_desktop.png`, fullPage: true });
+    const axe = await new AxeBuilder({ page: other }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const serious = axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    check(serious.length === 0, `Einheit barrierefrei (${serious.map((v) => v.id).join(", ") || "keine Verstösse"})`);
 
     // 7. Rechte
     sql(`update public.user_roles set role='coach' where user_id=(select id from auth.users where email='zweit@flp.test');`);

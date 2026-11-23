@@ -6,8 +6,14 @@ import { formatChf } from "@/lib/format";
 import { accessLabel, isEntitlementActive } from "@/lib/commerce";
 import { PageHeader, EmptyState, Badge } from "@/components/ui/Feedback";
 import { ProductCover } from "@/components/shop/ProductCover";
+import { PositionPicker, type PositionOffer } from "@/components/shop/PositionPicker";
+import { isPositionProduct } from "@/lib/positions";
 
-export const metadata: Metadata = { title: "Programme" };
+export const metadata: Metadata = {
+  title: "Programme",
+  description: "Trainingsprogramme nach Position für zuhause – Schritt für Schritt erklärt, Einmalzahlung, kein Abo.",
+  robots: { index: true, follow: true },
+};
 
 export default async function ProgramsPage() {
   const viewer = await getViewer();
@@ -18,6 +24,11 @@ export default async function ProgramsPage() {
   ]);
   if (error) throw new Error(error.message);
   const owned = new Set((ents ?? []).filter((e) => isEntitlementActive(e)).map((e) => e.product_id));
+  const all = products ?? [];
+  const offers: Record<string, PositionOffer> = Object.fromEntries(
+    all.filter((p) => isPositionProduct(p.slug)).map((p) => [p.slug, { priceCents: p.price_cents, owned: owned.has(p.id) }]),
+  );
+  const others = all.filter((p) => !isPositionProduct(p.slug));
 
   return (
     <>
@@ -33,29 +44,32 @@ export default async function ProgramsPage() {
           ) : undefined
         }
       />
-      {(products ?? []).length === 0 ? (
-        <EmptyState title="Bald verfügbar" text="Die ersten digitalen Programme werden gerade vorbereitet." />
-      ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products!.map((p) => (
-            <li key={p.id}>
-              <Link href={`/programme/${p.slug}`} className="group flex h-full flex-col rounded-card border border-line bg-graphite p-4 transition-colors hover:border-gold">
-                <ProductCover path={p.cover_image_path} title={p.title} />
-                <div className="flex flex-1 flex-col px-1 pt-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-2xl font-bold group-hover:text-gold">{p.title}</h2>
-                    {owned.has(p.id) && <Badge tone="ok">Freigeschaltet</Badge>}
+      {all.length === 0 && <EmptyState title="Bald verfügbar" text="Die ersten digitalen Programme werden gerade vorbereitet." />}
+      {Object.keys(offers).length > 0 && <PositionPicker offers={offers} />}
+      {others.length > 0 && (
+        <>
+          {Object.keys(offers).length > 0 && <h2 className="mb-6 text-2xl font-bold">Weitere Programme</h2>}
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((p) => (
+              <li key={p.id}>
+                <Link href={`/programme/${p.slug}`} className="group flex h-full flex-col rounded-card border border-line bg-graphite p-4 transition-colors hover:border-gold">
+                  <ProductCover path={p.cover_image_path} title={p.title} />
+                  <div className="flex flex-1 flex-col px-1 pt-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-2xl font-bold group-hover:text-gold">{p.title}</h2>
+                      {owned.has(p.id) && <Badge tone="ok">Freigeschaltet</Badge>}
+                    </div>
+                    {p.summary && <p className="mt-2 text-sm text-mute">{p.summary}</p>}
+                    <p className="mt-auto flex items-baseline justify-between pt-5">
+                      <span className="font-display text-2xl font-bold">{formatChf(p.price_cents)}</span>
+                      <span className="text-xs text-mute">{accessLabel(p.access_days)}</span>
+                    </p>
                   </div>
-                  {p.summary && <p className="mt-2 text-sm text-mute">{p.summary}</p>}
-                  <p className="mt-auto flex items-baseline justify-between pt-5">
-                    <span className="font-display text-2xl font-bold">{formatChf(p.price_cents)}</span>
-                    <span className="text-xs text-mute">{accessLabel(p.access_days)}</span>
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </>
   );

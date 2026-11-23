@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 
-export function ShareLink({ url, message }: { url: string; message: string }) {
+/** Link teilen; ohne eigene Nachricht wird ein allgemeiner Text verwendet (auch von /admin/check und /admin/monat genutzt). */
+export function ShareLink({ url, message: custom }: { url: string; message?: string }) {
+  const message = custom ?? `Hallo! Hier ist die Wochenfrage von FLP Performance – dein Kind braucht nur wenige Sekunden: ${url}`;
   const [copied, setCopied] = useState<"link" | "text" | null>(null);
   const copy = async (what: "link" | "text") => {
     try {

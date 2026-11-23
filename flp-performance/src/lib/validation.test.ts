@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consentSchema, playerSchema, privacyRequestSchema, registerSchema } from "./validation";
+import { consentSchema, parseTemplateDays, playerSchema, privacyRequestSchema, registerSchema, sessionSchema } from "./validation";
 import { latestConsents } from "./consent";
 
 describe("Validierung", () => {
@@ -35,5 +35,32 @@ describe("latestConsents", () => {
       { consent_type: "video_recording", granted: true, created_at: "2026-01-05T00:00:00Z" },
     ]);
     expect(res).toEqual({ data_processing: false, video_recording: true });
+  });
+});
+
+describe("Wochenstruktur", () => {
+  const base = { planId: crypto.randomUUID(), title: "Kraft", scheduledOn: "2026-11-09" };
+  it("akzeptiert Einheiten ohne Fokus und Uhrzeit", () => {
+    const r = sessionSchema.safeParse({ ...base, focus: "", startsAt: "", endsAt: "" });
+    expect(r.success && r.data.focus === null && r.data.startsAt === null).toBe(true);
+  });
+  it("prüft Fokus und Uhrzeiten", () => {
+    expect(sessionSchema.safeParse({ ...base, focus: "kraft", startsAt: "11:00", endsAt: "12:30" }).success).toBe(true);
+    expect(sessionSchema.safeParse({ ...base, focus: "ruhetag" }).success).toBe(false);
+    expect(sessionSchema.safeParse({ ...base, startsAt: "25:00" }).success).toBe(false);
+    expect(sessionSchema.safeParse({ ...base, startsAt: "12:30", endsAt: "11:00" }).success).toBe(false);
+  });
+  it("liest nur aktive Wochentage einer Vorlage", () => {
+    const fd = new FormData();
+    fd.set("active_1", "on");
+    fd.set("title_1", "Athletik");
+    fd.set("focus_1", "kraft");
+    fd.set("title_2", "Ignoriert");
+    fd.set("active_3", "on");
+    fd.set("title_3", "");
+    fd.set("focus_3", "technik");
+    const { days, errors } = parseTemplateDays(fd);
+    expect(days).toEqual([{ weekday: 1, title: "Athletik", focus: "kraft", startsAt: null, endsAt: null }]);
+    expect(Object.keys(errors)).toEqual(["title_3"]);
   });
 });

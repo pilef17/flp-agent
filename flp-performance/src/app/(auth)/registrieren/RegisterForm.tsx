@@ -7,12 +7,13 @@ import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/ui/Feedback";
 
-export function RegisterForm() {
+export function RegisterForm({ next = "" }: { next?: string }) {
   const [state, action] = useActionState(signUp, {});
   if (state.ok) return <FormMessage state={state} />;
   return (
     <form key={state.values?._n} action={action} className="space-y-5" noValidate>
       <FormMessage state={state} />
+      <input type="hidden" name="next" value={next} />
       <Field label="Vor- und Nachname" name="fullName" defaultValue={state.values?.fullName} autoComplete="name" required error={state.errors?.fullName} />
       <Field label="E-Mail" name="email" defaultValue={state.values?.email} type="email" autoComplete="email" required error={state.errors?.email} />
       <Field

@@ -341,6 +341,179 @@ select tests.eq((select count(*) from storage.objects where bucket_id = 'player-
   'Fremde Eltern sehen Spielervideos nicht');
 select tests.logout();
 
+-- Monatsplanung: Eltern melden aktiv/pausiert pro Monat
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.allowed($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-01', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Eltern melden Monatsstatus für das eigene Kind');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-01-01', true, '00000000-0000-0000-0000-00000000000c')$$,
+  'Monatsstatus nur im eigenen Namen');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-02-01', false, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Pause ohne Grund abgelehnt');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000001', '2027-03-15', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Monat muss am 1. beginnen');
+select tests.denied($$insert into public.player_month_status (player_id, month, active, set_by)
+  values ('10000000-0000-0000-0000-000000000002', '2026-12-01', true, '00000000-0000-0000-0000-0000000000a1')$$,
+  'Kein Monatsstatus für fremde Kinder');
+update public.player_month_status set active = false, reason = 'verletzung', set_by = '00000000-0000-0000-0000-0000000000a1'
+  where player_id = '10000000-0000-0000-0000-000000000001' and month = '2026-12-01';
+select tests.ok((select not active and reason = 'verletzung' from public.player_month_status
+  where player_id = '10000000-0000-0000-0000-000000000001' and month = '2026-12-01'), 'Eltern ändern auf pausiert mit Grund');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.eq((select count(*) from public.player_month_status), 0, 'Fremde Eltern sehen den Monatsstatus nicht');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.player_month_status), 1, 'Coach sieht den Monatsstatus seines Spielers');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select 1 from public.player_month_status$$, 'Anonym: kein Monatsstatus');
+select tests.logout();
+
+-- Trainingsanfragen: Eltern schlagen vor, Trainer bestätigt
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.allowed($$insert into public.training_requests (player_id, day, wish_times, location, requested_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-05', '9:00 / 9:30', 'Hardhof', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Eltern schlagen einen Termin mit Wunschzeit vor');
+select tests.denied($$insert into public.training_requests (player_id, day, wish_times, status, requested_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-06', '10:00', 'bestaetigt', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Eltern können nicht selbst bestätigen');
+select tests.denied($$insert into public.training_requests (player_id, day, wish_times, requested_by)
+  values ('10000000-0000-0000-0000-000000000002', '2026-12-06', '10:00', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Keine Anfrage für fremde Kinder');
+select tests.denied($$insert into public.training_requests (player_id, day, wish_times, requested_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-07', '', '00000000-0000-0000-0000-0000000000a1')$$,
+  'Wunschzeit ist Pflicht');
+update public.training_requests set status = 'bestaetigt' where player_id = '10000000-0000-0000-0000-000000000001';
+select tests.eq((select count(*) from public.training_requests where status = 'bestaetigt'), 0, 'Eltern können Anfragen nicht ändern');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000b1');
+select tests.eq((select count(*) from public.training_requests), 0, 'Fremde Eltern sehen keine Anfragen');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+update public.training_requests set status = 'bestaetigt', confirmed_time = '9:30', coach_note = 'Platz 2'
+  where player_id = '10000000-0000-0000-0000-000000000001' and day = '2026-12-05';
+select tests.ok((select status = 'bestaetigt' and confirmed_time = '9:30' from public.training_requests
+  where player_id = '10000000-0000-0000-0000-000000000001' and day = '2026-12-05'), 'Coach bestätigt mit Uhrzeit');
+select tests.denied($$update public.training_requests set status = 'unbekannt'$$, 'Nur gültige Status');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+delete from public.training_requests where day = '2026-12-05';
+select tests.eq((select count(*) from public.training_requests), 1, 'Bestätigte Termine können Eltern nicht löschen');
+insert into public.training_requests (player_id, day, wish_times, requested_by)
+  values ('10000000-0000-0000-0000-000000000001', '2026-12-12', '10:00', '00000000-0000-0000-0000-0000000000a1');
+delete from public.training_requests where day = '2026-12-12';
+select tests.eq((select count(*) from public.training_requests), 1, 'Eltern ziehen offene Anfragen zurück');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select 1 from public.training_requests$$, 'Anonym: keine Trainingsanfragen');
+select tests.logout();
+
+-- Wochenvorlagen
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.week_templates), 2, 'Coach sieht die Startvorlagen');
+select tests.eq((select count(*) from public.week_template_days d join public.week_templates t on t.id = d.template_id
+  where t.title = 'Wochenstruktur Kids'), 6, 'Vorlage Kids hat 6 Trainingstage');
+select tests.ok((select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-09', 'Woche aus Vorlage') is not null), 'Coach erstellt Plan aus Vorlage');
+select tests.eq((select count(*) from public.training_sessions s join public.training_plans p on p.id = s.plan_id
+  where p.week_start = '2026-11-09' and p.player_id = '10000000-0000-0000-0000-000000000001' and s.focus is not null), 6,
+  'Plan aus Vorlage enthält 6 Einheiten mit Fokus');
+select tests.eq((select count(*) from public.training_plans where week_start = '2026-11-09' and status = 'draft'), 1,
+  'Plan aus Vorlage ist ein Entwurf');
+select tests.ok((select max(scheduled_on) = '2026-11-14' from public.training_sessions s join public.training_plans p on p.id = s.plan_id
+  where p.week_start = '2026-11-09'), 'Samstag der Vorlage landet auf dem Samstag der Planwoche');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-09', 'Doppelt')$$, 'Vorlage nicht zweimal in dieselbe Woche');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000002', '2026-11-09', 'Fremd')$$, 'Coach kann Vorlage nicht auf fremden Spieler anwenden');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates where title = 'Wochenstruktur Kids'),
+  '10000000-0000-0000-0000-000000000001', '2026-11-11', 'Mittwoch')$$, 'Planwoche muss am Montag beginnen');
+select tests.denied($$update public.training_sessions set starts_at = '12:00', ends_at = '11:00'
+  where id = '31000000-0000-0000-0000-000000000001'$$, 'Endzeit vor Startzeit abgelehnt');
+select tests.allowed($$insert into public.week_templates (title) values ('Eigene Vorlage')$$, 'Coach erstellt eigene Vorlage');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.week_templates), 0, 'Eltern sehen keine Vorlagen');
+select tests.denied($$insert into public.week_templates (title) values ('Eltern-Vorlage')$$, 'Eltern können keine Vorlage anlegen');
+select tests.denied($$select public.apply_week_template((select id from public.week_templates limit 1),
+  '10000000-0000-0000-0000-000000000001', '2026-11-16', 'Eltern')$$, 'Eltern können keine Vorlage anwenden');
+select tests.eq((select count(*) from public.training_plans where week_start = '2026-11-09'), 0, 'Eltern sehen den Entwurf aus der Vorlage nicht');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select * from public.week_templates$$, 'Anonym: keine Vorlagen');
+select tests.logout();
+
+-- Positionsprogramme: Import strukturierter Einheiten
+select tests.login('00000000-0000-0000-0000-00000000000a');
+select tests.ok((select public.import_program_product('{"slug":"pro-test","title":"Pro · Test","summary":"S","price_cents":6900,"access_days":183,
+  "sessions":[{"title":"Einheit 1","data":{"exercises":[]}},{"title":"Einheit 2","data":{"exercises":[]}}]}'::jsonb) is not null),
+  'Admin importiert ein Programm mit Einheiten');
+select tests.ok((select not is_active and price_cents = 6900 and access_days = 183 from public.products where slug = 'pro-test'),
+  'Importiertes Programm ist inaktiv und übernimmt Preis und Laufzeit');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'session'), 2, 'Zwei Einheiten importiert');
+insert into public.product_content (product_id, kind, title, body)
+  select id, 'article', 'Eigene Lektion', 'Text' from public.products where slug = 'pro-test';
+update public.products set price_cents = 5900 where slug = 'pro-test';
+select public.import_program_product('{"slug":"pro-test","title":"Pro · Neu","price_cents":9900,
+  "sessions":[{"title":"Einheit A","data":{"exercises":[]}}]}'::jsonb);
+select tests.ok((select title = 'Pro · Neu' and price_cents = 5900 from public.products where slug = 'pro-test'),
+  'Erneuter Import aktualisiert Texte, behält den angepassten Preis');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'session'), 1, 'Erneuter Import ersetzt die Einheiten');
+select tests.eq((select count(*) from public.product_content pc join public.products p on p.id = pc.product_id
+  where p.slug = 'pro-test' and pc.kind = 'article'), 1, 'Erneuter Import behält eigene Lektionen');
+select tests.denied($$select public.import_program_product('{"slug":"leer","title":"Leer","price_cents":4900,"sessions":[]}'::jsonb)$$,
+  'Programm ohne Einheiten abgelehnt');
+select tests.denied($$insert into public.product_content (product_id, kind, title)
+  select id, 'session', 'Ohne Daten' from public.products where slug = 'pro-test'$$, 'Einheit ohne Daten abgelehnt');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.denied($$select public.import_program_product('{"slug":"coach-test","title":"Coach","price_cents":4900,
+  "sessions":[{"title":"E","data":{}}]}'::jsonb)$$, 'Coach kann keine Programme importieren');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.denied($$select public.import_program_product('{"slug":"eltern-test","title":"Eltern","price_cents":4900,
+  "sessions":[{"title":"E","data":{}}]}'::jsonb)$$, 'Eltern können keine Programme importieren');
+select tests.eq((select count(*) from public.product_content where kind = 'session'), 0, 'Einheiten ohne Kauf nicht sichtbar');
+select tests.logout();
+select tests.anon();
+select tests.denied($$select public.import_program_product('{}'::jsonb)$$, 'Anonym: kein Programmimport');
+select tests.logout();
+
+-- Inhaltsübersicht: ohne Kauf nur die ersten 3 Titel
+select tests.login('00000000-0000-0000-0000-00000000000a');
+insert into public.products (slug, title, price_cents, is_active) values ('vorschau-test', 'Vorschau', 2900, true);
+insert into public.product_content (product_id, kind, title, body, position)
+  select id, 'article', 'Lektion ' || n, 'Text', n from public.products, generate_series(1, 5) n where slug = 'vorschau-test';
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Admin: alle Titel in der Übersicht');
+select tests.logout();
+select tests.anon();
+select tests.eq((select count(*) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Anonym: Anzahl aller Inhalte sichtbar');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 3::bigint,
+  'Anonym: nur die ersten 3 Titel sichtbar');
+select tests.ok((select bool_and(title is null) from public.product_outline((select id from public.products where slug = 'vorschau-test'))
+  where item_position > 3), 'Anonym: Titel ab Nr. 4 verborgen');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 3::bigint,
+  'Eltern ohne Kauf: nur die ersten 3 Titel');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000a');
+insert into public.entitlements (user_id, product_id, source, granted_by)
+  select '00000000-0000-0000-0000-0000000000a1', id, 'manual', '00000000-0000-0000-0000-00000000000a' from public.products where slug = 'vorschau-test';
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(title) from public.product_outline((select id from public.products where slug = 'vorschau-test'))), 5::bigint,
+  'Nach Kauf: alle Titel sichtbar');
+select tests.logout();
+
 -- Datenlöschung: Admin löscht Spieler inkl. veröffentlichter Beurteilungen
 select tests.login('00000000-0000-0000-0000-00000000000a');
 select tests.allowed($$delete from public.players where id = '10000000-0000-0000-0000-000000000001'$$,
@@ -440,6 +613,36 @@ select tests.logout();
 
 select tests.login('00000000-0000-0000-0000-00000000000a');
 select tests.eq((select count(*) from public.weekly_answers), 1, 'Wochenfrage: Admin sieht Antworten');
+select tests.logout();
+
+-- ---------------------------------------------------------------------------
+-- Spieler-Check: Kontaktanfragen nur über den Server, lesen nur Admin/Coach
+-- ---------------------------------------------------------------------------
+set role service_role;
+insert into public.check_leads (parent_name, email, child_age, position, level, score, technik, taktik, answers, consent_at)
+  values ('Anna Muster', 'anna@test.invalid', 11, 'Stürmer', 'mittel', 14, 8, 6, '{1,1,2,1,2,1,1,1,1,1,1,1}', now());
+reset role;
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', 'profi', 1, 1, 0, '{1,0,0,0,0,0,0,0,0,0,0,0}', now())$$, 'Check: nur gültige Niveaus');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', 'mittel', 12, 6, 6, '{1,1}', now())$$, 'Check: genau 12 Antworten');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'X@Test.invalid', 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: E-Mail klein geschrieben');
+select tests.denied($$insert into public.check_leads (parent_name, email, team, level, score, technik, taktik, answers, consent_at)
+  values ('X Y', 'x@test.invalid', repeat('x', 61), 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: Verein höchstens 60 Zeichen');
+select tests.anon();
+select tests.denied($$select 1 from public.check_leads$$, 'Check: anonym nicht lesbar');
+select tests.denied($$insert into public.check_leads (parent_name, email, level, score, technik, taktik, answers, consent_at)
+  values ('Bot Bot', 'bot@test.invalid', 'mittel', 12, 6, 6, '{1,1,1,1,1,1,1,1,1,1,1,1}', now())$$, 'Check: anonym kein direktes Schreiben');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-0000000000a1');
+select tests.eq((select count(*) from public.check_leads), 0, 'Check: Eltern sehen keine Anfragen');
+select tests.denied($$delete from public.check_leads$$, 'Check: Eltern können nicht löschen');
+select tests.logout();
+select tests.login('00000000-0000-0000-0000-00000000000c');
+select tests.eq((select count(*) from public.check_leads), 1, 'Check: Coach sieht Anfragen');
+select tests.denied($$update public.check_leads set level = 'einsteiger'$$, 'Check: Coach kann Anfragen nicht verändern');
+select tests.allowed($$delete from public.check_leads where email = 'anna@test.invalid'$$, 'Check: Coach kann Anfragen löschen');
 select tests.logout();
 
 -- ---------------------------------------------------------------------------

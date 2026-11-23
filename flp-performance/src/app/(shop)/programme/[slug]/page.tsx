@@ -13,7 +13,10 @@ import { startCheckout } from "../actions";
 
 export const metadata: Metadata = { title: "Programm-Details" };
 
-const KIND_LABEL = { exercise: "Übung", article: "Lektion", video: "Video" } as const;
+const KIND_LABEL = { exercise: "Übung", article: "Lektion", video: "Video", session: "Einheit" } as const;
+const KIND_PLURAL = { exercise: "Übungen", article: "Lektionen", video: "Videos", session: "Einheiten" } as const;
+/** Öffentliche Vorschau: nur die ersten Titel, damit der Inhalt nicht ohne Kauf ablesbar ist */
+const PREVIEW_COUNT = 3;
 
 export default async function ProgramDetailPage({
   params,
@@ -42,7 +45,7 @@ export default async function ProgramDetailPage({
       : Promise.resolve({ data: [] }),
   ]);
   const owned = (ents ?? []).some((e) => isEntitlementActive(e));
-  const items = (outline ?? []) as { kind: keyof typeof KIND_LABEL; title: string }[];
+  const items = (outline ?? []) as { kind: keyof typeof KIND_LABEL; title: string | null }[];
 
   return (
     <>
@@ -78,11 +81,20 @@ export default async function ProgramDetailPage({
                 </SubmitButton>
               </form>
             ) : (
-              <ButtonLink href={`/login?next=${encodeURIComponent(`/programme/${p.slug}`)}`}>Anmelden und kaufen</ButtonLink>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href={`/registrieren?next=${encodeURIComponent(`/programme/${p.slug}`)}`}>Konto erstellen und kaufen</ButtonLink>
+                <ButtonLink href={`/login?next=${encodeURIComponent(`/programme/${p.slug}`)}`} variant="secondary">
+                  Ich habe ein Konto
+                </ButtonLink>
+              </div>
             )}
             {!owned && (
               <p className="text-xs text-mute">
-                Sichere Zahlung über Stripe. Kartendaten werden nicht bei FLP Performance gespeichert. Zugang sofort nach bestätigter Zahlung.
+                Sichere Zahlung über Stripe. Kartendaten werden nicht bei FLP Performance gespeichert. Zugang sofort nach bestätigter Zahlung. Mit dem Kauf akzeptierst du die{" "}
+                <Link href="/agb" className="underline underline-offset-4 hover:text-paper">
+                  AGB
+                </Link>
+                .
               </p>
             )}
           </div>
@@ -101,14 +113,28 @@ export default async function ProgramDetailPage({
           {items.length === 0 ? (
             <p className="text-sm text-mute">Die Inhalte werden laufend ergänzt.</p>
           ) : (
-            <ul className="divide-y divide-line rounded-card border border-line">
-              {items.map((it, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                  <span>{it.title}</span>
-                  <span className="text-xs uppercase tracking-wider text-mute">{KIND_LABEL[it.kind]}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="mb-4 text-sm text-mute">
+                {(Object.keys(KIND_LABEL) as (keyof typeof KIND_LABEL)[])
+                  .map((k) => [k, items.filter((it) => it.kind === k).length] as const)
+                  .filter(([, n]) => n > 0)
+                  .map(([k, n]) => `${n} ${n === 1 ? KIND_LABEL[k] : KIND_PLURAL[k]}`)
+                  .join(" · ")}
+              </p>
+              <ul className="divide-y divide-line rounded-card border border-line">
+                {items.slice(0, PREVIEW_COUNT).map((it, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                    <span>{it.title}</span>
+                    <span className="text-xs uppercase tracking-wider text-mute">{KIND_LABEL[it.kind]}</span>
+                  </li>
+                ))}
+                {items.length > PREVIEW_COUNT && (
+                  <li className="px-4 py-3 text-sm text-mute">
+                    + {items.length - PREVIEW_COUNT} weitere{owned ? "" : " – nach dem Kauf freigeschaltet"}
+                  </li>
+                )}
+              </ul>
+            </>
           )}
         </section>
       </div>
