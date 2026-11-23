@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 
-export function ShareLink({ url }: { url: string }) {
+export function ShareLink({ url, message: custom }: { url: string; message?: string }) {
   const [copied, setCopied] = useState(false);
-  const message = `Hallo! Hier ist die Wochenfrage von FLP Performance – dein Kind braucht nur wenige Sekunden: ${url}`;
+  const message = custom ?? `Hallo! Hier ist die Wochenfrage von FLP Performance – dein Kind braucht nur wenige Sekunden: ${url}`;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);

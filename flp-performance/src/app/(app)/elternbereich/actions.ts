@@ -1,10 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireViewer } from "@/lib/auth";
 import { POLICY_VERSION } from "@/lib/consent";
 import { consentSchema } from "@/lib/validation";
+import { monthStatusNotification, monthStatusSchema } from "@/lib/month-status";
+import { newRequestMail, requestSchema } from "@/lib/training-requests";
+import { notifyCoach } from "@/lib/mail";
+import { publicEnv } from "@/lib/env";
 
 /** Neue Einwilligungserklärung anhängen (Historie bleibt erhalten). */
 export async function recordConsent(formData: FormData) {
@@ -19,5 +24,86 @@ export async function recordConsent(formData: FormData) {
     granted: parsed.data.granted,
     policy_version: POLICY_VERSION,
   });
+  revalidatePath("/elternbereich");
+}
+
+export type MonthStatusState = { ok?: boolean; error?: string };
+
+/** Eltern melden für einen Monat: aktiv oder pausiert (mit Grund). Der Trainer erhält eine E-Mail. */
+export async function setMonthStatus(_: MonthStatusState, formData: FormData): Promise<MonthStatusState> {
+  const viewer = await requireViewer();
+  const parsed = monthStatusSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Ungültige Angaben." };
+  const { playerId, month, active, reason, note } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("player_month_status")
+    .upsert(
+      { player_id: playerId, month, active, reason, note, set_by: viewer.id, updated_at: new Date().toISOString() },
+      { onConflict: "player_id,month" },
+    );
+  if (error) return { error: "Das hat leider nicht geklappt. Bitte später erneut versuchen." };
+
+  const { data: player } = await supabase.from("players").select("first_name, last_name").eq("id", playerId).maybeSingle();
+  const mail = monthStatusNotification(
+    {
+      playerName: player ? `${player.first_name} ${player.last_name}` : "Spieler",
+      parentName: viewer.fullName,
+      month,
+      active,
+      reason,
+      note,
+    },
+    publicEnv.siteUrl(),
+  );
+  after(() => notifyCoach({ ...mail, replyTo: viewer.email ?? undefined }));
+  revalidatePath("/elternbereich");
+  return { ok: true };
+}
+
+export type RequestState = { ok?: boolean; error?: string; values?: Record<string, string> };
+
+/** Eltern schlagen einen Trainingstermin vor (Tag, Wunschzeit, Ort). Der Trainer erhält eine E-Mail. */
+export async function requestTraining(_: RequestState, formData: FormData): Promise<RequestState> {
+  const viewer = await requireViewer();
+  const raw = Object.fromEntries(formData) as Record<string, string>;
+  const values = { day: raw.day ?? "", wishTimes: raw.wishTimes ?? "", location: raw.location ?? "", note: raw.note ?? "" };
+  const parsed = requestSchema().safeParse({ playerId: raw.playerId, ...values });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Ungültige Angaben.", values };
+  const { playerId, day, wishTimes, location, note } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("training_requests")
+    .insert({ player_id: playerId, day, wish_times: wishTimes, location, note, requested_by: viewer.id });
+  if (error) {
+    return {
+      error: error.code === "23505" ? "Für diesen Tag gibt es schon eine Anfrage." : "Das hat leider nicht geklappt. Bitte später erneut versuchen.",
+      values,
+    };
+  }
+  const { data: player } = await supabase.from("players").select("first_name, last_name").eq("id", playerId).maybeSingle();
+  const mail = newRequestMail(
+    {
+      playerName: player ? `${player.first_name} ${player.last_name}` : "Spieler",
+      parentName: viewer.fullName,
+      day,
+      wish_times: wishTimes,
+      location,
+      note,
+    },
+    publicEnv.siteUrl(),
+  );
+  after(() => notifyCoach({ ...mail, replyTo: viewer.email ?? undefined }));
+  revalidatePath("/elternbereich");
+  return { ok: true };
+}
+
+/** Offene Anfrage zurückziehen (bestätigte Termine nur über den Trainer). */
+export async function withdrawRequest(formData: FormData) {
+  await requireViewer();
+  const id = String(formData.get("requestId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const supabase = await createClient();
+  await supabase.from("training_requests").delete().eq("id", id).eq("status", "angefragt");
   revalidatePath("/elternbereich");
 }

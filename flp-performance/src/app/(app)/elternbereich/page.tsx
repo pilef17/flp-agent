@@ -10,6 +10,10 @@ import { PageHeader, EmptyState, Badge, Alert } from "@/components/ui/Feedback";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { PlayerOverview } from "@/components/player/PlayerOverview";
 import { recordConsent } from "./actions";
+import { MonthStatusForm } from "./MonthStatusForm";
+import { TrainingRequests, type ParentRequest } from "./TrainingRequests";
+import { addDays, todayInSwitzerland } from "@/lib/dates";
+import { currentMonth, shiftMonth } from "@/lib/month-status";
 import { whatsappNumber } from "@/lib/wochenfrage";
 import { StartPaths } from "@/components/marketing/StartPaths";
 
@@ -41,6 +45,24 @@ export default async function ParentDashboard() {
   if (error) throw new Error(error.message);
   const players = (links ?? []).map((l) => l.players as unknown as LinkedPlayer).filter(Boolean);
   const overviews = await Promise.all(players.map((p) => loadPlayerOverview(supabase, p.id)));
+  const months = [currentMonth(), shiftMonth(currentMonth(), 1)];
+  const { data: monthRows } = players.length
+    ? await supabase
+        .from("player_month_status")
+        .select("player_id, month, active, reason, note")
+        .in("player_id", players.map((p) => p.id))
+        .in("month", months)
+    : { data: [] };
+  const { data: requestRows } = players.length
+    ? await supabase
+        .from("training_requests")
+        .select("id, player_id, day, wish_times, location, note, status, confirmed_time, coach_note")
+        .in("player_id", players.map((p) => p.id))
+        .gte("day", addDays(todayInSwitzerland(), -7))
+        .order("day")
+    : { data: [] };
+  const requestsOf = (playerId: string) => ((requestRows ?? []) as (ParentRequest & { player_id: string })[]).filter((r) => r.player_id === playerId);
+  const monthStatus = (playerId: string, month: string) => (monthRows ?? []).find((r) => r.player_id === playerId && r.month === month) ?? null;
 
   return (
     <>
@@ -89,6 +111,23 @@ export default async function ParentDashboard() {
                     </Alert>
                   </div>
                 )}
+
+                <Card className="mb-6">
+                  <CardTitle eyebrow="Monatsplanung" title={`Trainiert ${player.first_name} mit?`} />
+                  <p className="mb-4 text-sm text-mute">
+                    Melde pro Monat, ob {player.first_name} aktiv trainiert oder pausiert. So kann der Trainer die Trainings planen.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {months.map((m) => (
+                      <MonthStatusForm key={m} playerId={player.id} firstName={player.first_name} month={m} status={monthStatus(player.id, m)} />
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="mb-6">
+                  <CardTitle eyebrow="Trainingstermine" title={`Termine für ${player.first_name}`} />
+                  <TrainingRequests playerId={player.id} firstName={player.first_name} requests={requestsOf(player.id)} />
+                </Card>
 
                 <PlayerOverview data={overviews[i]} playerId={player.id} />
 
