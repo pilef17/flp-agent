@@ -126,6 +126,8 @@ const suite = () =>
     check((await list.locator("li", { hasText: "Lio Beispiel" }).getByLabel("Antwort 5 von 5").count()) === 1, "Panel: korrigierte Antwort 5 angezeigt");
     check(await seen(list.locator("li", { hasText: "Mia Test" }).getByText("Nicht geübt")), "Panel: «Nicht geübt» angezeigt");
     check((await coach.getByTestId("family-link").textContent())?.trim() === "https://127.0.0.1:3100", "Panel zeigt den Link der eigenen Domain");
+    const share = decodeURIComponent((await coach.getByTestId("share-whatsapp").getAttribute("href")) ?? "");
+    check(share.startsWith("https://wa.me/?text=Liebe Eltern") && share.includes("👉 https://127.0.0.1:3100") && share.includes("Felipe · FLP Performance"), "WhatsApp-Teilen enthält die Einführungsnachricht mit Link und Name");
     check((await coach.locator("main h2, section p.font-display").filter({ hasText: question }).count()) >= 1, "Panel zeigt die aktuelle Frage");
     check(await seen(coach.getByText("Psychologische Variablen → Emotionale Stabilität")), "Panel zeigt das Item aus dem Beurteilungsbogen");
     check((await coach.locator("details li").count()) === 14, "Panel zeigt den ganzen Zyklus (12 Wochen + Pause + Beurteilung)");

@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 
+/** Link teilen; ohne eigene Nachricht wird ein allgemeiner Text verwendet (auch von /admin/check und /admin/monat genutzt). */
 export function ShareLink({ url, message: custom }: { url: string; message?: string }) {
-  const [copied, setCopied] = useState(false);
   const message = custom ?? `Hallo! Hier ist die Wochenfrage von FLP Performance – dein Kind braucht nur wenige Sekunden: ${url}`;
-  const copy = async () => {
+  const [copied, setCopied] = useState<"link" | "text" | null>(null);
+  const copy = async (what: "link" | "text") => {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(what === "link" ? url : message);
+      setCopied(what);
+      setTimeout(() => setCopied(null), 2000);
     } catch {
-      setCopied(false);
+      setCopied(null);
     }
   };
   return (
@@ -21,16 +22,28 @@ export function ShareLink({ url, message: custom }: { url: string; message?: str
         {url}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" onClick={copy} className={buttonClass("secondary")}>
-          {copied ? "Kopiert ✓" : "Link kopieren"}
-        </button>
-        <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonClass("primary")}
+          data-testid="share-whatsapp"
+        >
           Per WhatsApp teilen
         </a>
-        <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClass("ghost")}>
-          Vorschau öffnen
-        </a>
+        <button type="button" onClick={() => copy("text")} className={buttonClass("secondary")}>
+          {copied === "text" ? "Kopiert ✓" : "Nachricht kopieren"}
+        </button>
+        <button type="button" onClick={() => copy("link")} className={buttonClass("ghost")}>
+          {copied === "link" ? "Kopiert ✓" : "Nur Link kopieren"}
+        </button>
       </div>
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm text-mute hover:text-paper">Nachricht ansehen</summary>
+        <p className="mt-2 whitespace-pre-wrap rounded-card border border-line bg-ink px-4 py-3 text-sm" data-testid="family-message">
+          {message}
+        </p>
+      </details>
     </div>
   );
 }
